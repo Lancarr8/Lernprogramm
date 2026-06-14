@@ -371,8 +371,8 @@ export default function LernseiteScreen({ data, onComplete, currentStep, totalSt
           </Panel>
         )}
 
-        {/* SIGNATURE — einfache Formel-Card (typ === "formel") */}
-        {isFormel && m && (
+        {/* SIGNATURE — Formel-Card (typ === "formel"): Formel + Rechenbeispiel */}
+        {isFormel && interaktiv.formel && (
           <Panel>
             <div style={{ ...tagStyle, marginBottom: 10 }}>
               <TagDot color="var(--c-teal)" />
@@ -385,10 +385,56 @@ export default function LernseiteScreen({ data, onComplete, currentStep, totalSt
                 fontWeight: 600,
                 color: "var(--c-teal)",
                 textAlign: "center",
+                lineHeight: 1.3,
+                margin: "2px 0 14px",
               }}
             >
-              {m.formel}
+              {interaktiv.formel}
             </div>
+
+            {interaktiv.beispiel && (
+              <div
+                style={{
+                  border: "1px solid var(--c-edge)",
+                  borderRadius: 11,
+                  padding: "13px 13px 14px",
+                  background: "color-mix(in srgb, var(--c-teal) 5%, var(--c-bg2))",
+                }}
+              >
+                {(interaktiv.beispiel.werte || []).map((w, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 12.5,
+                      color: "var(--c-ink)",
+                      display: "flex",
+                      gap: 7,
+                      alignItems: "flex-start",
+                      lineHeight: 1.45,
+                      marginTop: i === 0 ? 0 : 5,
+                    }}
+                  >
+                    <span style={{ color: "var(--c-teal)" }}>·</span>
+                    {w}
+                  </div>
+                ))}
+                {interaktiv.beispiel.ergebnis && (
+                  <div
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 15,
+                      fontWeight: 600,
+                      color: "var(--c-ember)",
+                      lineHeight: 1.4,
+                      marginTop: (interaktiv.beispiel.werte || []).length ? 11 : 0,
+                    }}
+                  >
+                    → {interaktiv.beispiel.ergebnis}
+                  </div>
+                )}
+              </div>
+            )}
           </Panel>
         )}
 

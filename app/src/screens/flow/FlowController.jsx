@@ -86,6 +86,24 @@ export default function FlowController({ navigate, context }) {
       >
         ← Zurück
       </Button>
+
+      {/* DEV-Skip: überspringt den aktuellen Schritt (ignoriert dessen Hürde). Nur im Dev-Modus. */}
+      {import.meta.env.DEV && (
+        <Button
+          variant="ghost"
+          onClick={handleComplete}
+          style={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+            zIndex: 20,
+            color: "var(--c-ember)",
+            borderColor: "var(--c-ember)",
+          }}
+        >
+          Überspringen →
+        </Button>
+      )}
       <motion.div key={currentIndex} {...fade}>
         <ScreenComponent
           data={stepData}
