@@ -17,96 +17,12 @@ import { rise, pop } from "../../theme/motion.js";
   Build wird NUR diese Funktion durch einen LLM-Call ersetzt, der exakt dasselbe
   Objekt zurückgibt. Alles andere bleibt unverändert. (Vertrag siehe HANDOFF.md.)
 
-  CONTENT: CONCEPT_URI bleibt inline (wandert in Phase 4 nach self-explanation.js).
+  CONTENT: Die Konzept-Karte kommt als data-Prop aus self-explanation.js
+  (vom FlowController geladen) — kein hardcodierter Themen-Inhalt mehr im Screen.
 */
 
-// ---------------------------------------------------------------------------
-// Konzept-Karte (autorisierter Grundwahrheits-Datensatz) — geprüft, nicht generiert
-// ---------------------------------------------------------------------------
-const CONCEPT_URI = {
-  id: "uri",
-  prompt:
-    "Warum kannst du bei U = R · I nicht eine Größe ändern, ohne dass eine andere mitgeht?",
-  hint: "Denk an die Wasser-Analogie von vorhin — Druck, Engstelle, Fluss.",
-  keyPoints: [
-    {
-      id: "kp1",
-      label: "Spannung = der Antrieb",
-      canonical: "Die Spannung U ist die treibende Größe (Druck), die Ladung bewegt.",
-      nudge:
-        "Du hast die treibende Größe noch nicht benannt — was „drückt“ die Ladung überhaupt durch den Draht?",
-      test: (t) =>
-        /spannung/.test(t) &&
-        /(treib|drück|druck|antrieb|schieb|kraft|potential|potenzial|pumpe)/.test(t),
-    },
-    {
-      id: "kp2",
-      label: "Widerstand bremst den Fluss",
-      canonical: "Der Widerstand R hemmt den Stromfluss (Engstelle).",
-      nudge: "Und was hält dagegen? Welche Größe bremst den Fluss?",
-      test: (t) =>
-        /widerstand/.test(t) &&
-        /(bremst|hemmt|begrenzt|gegen|engstell|\beng|behindert|drossel|dagegen)/.test(t),
-    },
-    {
-      id: "kp3",
-      label: "Strom ergibt sich aus beiden",
-      canonical: "Der Strom I ist keine frei gesetzte Größe, sondern folgt aus U und R.",
-      nudge:
-        "Ist der Strom eine eigene, frei einstellbare Größe — oder ergibt er sich aus den anderen beiden?",
-      test: (t) =>
-        /strom/.test(t) &&
-        /(ergibt|ergebnis|folgt|resultiert|hängt|abhäng|stellt sich)/.test(t),
-    },
-    {
-      id: "kp4",
-      label: "U fest: R größer → I kleiner",
-      canonical: "Bei festem U sind R und I gegenläufig gekoppelt: steigt R, sinkt I.",
-      nudge:
-        "Kern der Sache: Du hältst U fest und drehst R hoch. Was passiert mit I — in welche Richtung?",
-      test: (t) =>
-        /(größer|grösser|höher|hoeher|mehr|steigt|erhöh|erhoeh)[^.]{0,45}(kleiner|weniger|sinkt|fällt|faellt|geringer|runter)/.test(
-          t
-        ) ||
-        /(kleiner|weniger|sinkt)[^.]{0,45}(größer|grösser|mehr|steigt)/.test(t) ||
-        /je[^.]{0,18}desto/.test(t) ||
-        /(umgekehrt|gegenläufig|gegenlaeufig|gekoppelt|koppl)/.test(t),
-    },
-  ],
-  misconceptions: [
-    {
-      id: "mc2",
-      label: "Spannung und Strom als dasselbe",
-      fix: "Spannung und Strom fühlen sich verwandt an, sind aber nicht dasselbe — das eine ist der Druck, das andere der Fluss. Welches ist welches?",
-      test: (t) =>
-        /(spannung und strom|strom und spannung)[^.]{0,25}(dasselbe|das gleiche|gleich|identisch|das selbe)/.test(
-          t
-        ) || /spannung[^.]{0,15}(ist|=|sind)[^.]{0,12}(der )?strom/.test(t),
-    },
-    {
-      id: "mc1",
-      label: "Mehr Widerstand = mehr Strom",
-      fix: "Halt — denk nochmal an die Engstelle: lässt eine engere Stelle mehr oder weniger durch?",
-      test: (t) =>
-        /(mehr|höher|hoeher|größer|grösser)[^.]{0,30}widerstand[^.]{0,35}(mehr|höher|hoeher|größer|grösser|steigt)[^.]{0,18}strom/.test(
-          t
-        ) ||
-        /widerstand[^.]{0,20}(erhöh|erhoeh|größer|grösser|hoch)[^.]{0,30}strom[^.]{0,15}(steigt|größer|grösser|mehr)/.test(
-          t
-        ),
-    },
-    {
-      id: "mc3",
-      label: "Strom wird „verbraucht“",
-      fix: "Der Strom ist im einfachen Stromkreis überall gleich groß — er wird nicht „verbraucht“. Was ändert sich am Widerstand stattdessen?",
-      test: (t) =>
-        /strom[^.]{0,20}(verbraucht|aufgebraucht|verloren|weg|weniger nach)/.test(t) ||
-        /verbraucht[^.]{0,15}strom/.test(t),
-    },
-  ],
-  praiseDeepening:
-    "Stark — alle Kernpunkte sitzen. Jetzt schärfer: Was passiert mit I, wenn U *und* R gleichzeitig steigen?",
-};
+// Konzept-Karte (CONCEPT_URI) liegt jetzt in der Content-Datei self-explanation.js
+// und kommt als data-Prop herein. Hier ist NUR noch die Klassifikator-/Feedback-Logik.
 
 // ---------------------------------------------------------------------------
 // Klassifikator (PROTOTYP-HEURISTIK) — Austausch-Punkt für den echten LLM-Call.
@@ -227,10 +143,48 @@ const DEMOS = {
 };
 
 // ---------------------------------------------------------------------------
+// Fallback wenn keine Konzept-Karte vorliegt (leerer/ladender Themenbereich)
+// ---------------------------------------------------------------------------
+function PlaceholderShell({ titel, currentStep, totalSteps, onComplete }) {
+  return (
+    <div
+      className="grid-bg"
+      style={{ minHeight: "100%", display: "flex", justifyContent: "center", padding: 24 }}
+    >
+      <motion.div {...rise} style={{ width: "100%", maxWidth: 520 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: 14,
+            fontFamily: "var(--font-mono)",
+            fontSize: 12,
+          }}
+        >
+          <span style={{ color: "var(--c-dim)" }}>SELF-EXPLANATION</span>
+          <span style={{ color: "var(--c-teal)" }}>
+            Schritt {currentStep} / {totalSteps}
+          </span>
+        </div>
+        <Panel>
+          <p style={{ margin: "0 0 6px", color: "var(--c-dim)", fontFamily: "var(--font-mono)", fontSize: 12 }}>
+            {titel.toUpperCase()}
+          </p>
+          <p style={{ margin: "0 0 20px", fontSize: 15, lineHeight: 1.6 }}>Inhalt folgt in Kürze.</p>
+          <Button variant="go" onClick={onComplete}>
+            Weiter
+          </Button>
+        </Panel>
+      </motion.div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
-export default function SelfExplanationScreen({ onComplete, currentStep, totalSteps }) {
-  const concept = CONCEPT_URI;
+export default function SelfExplanationScreen({ data, onComplete, currentStep, totalSteps }) {
+  const concept = data;
   const [text, setText] = useState("");
   const [feedback, setFeedback] = useState(null);
   const [empty, setEmpty] = useState(false);
@@ -253,6 +207,17 @@ export default function SelfExplanationScreen({ onComplete, currentStep, totalSt
   function loadDemo(key) {
     setText(DEMOS[key]);
     check(DEMOS[key]);
+  }
+
+  if (!data || !data.keyPoints) {
+    return (
+      <PlaceholderShell
+        titel="Self-Explanation"
+        currentStep={currentStep}
+        totalSteps={totalSteps}
+        onComplete={onComplete}
+      />
+    );
   }
 
   return (
@@ -288,12 +253,10 @@ export default function SelfExplanationScreen({ onComplete, currentStep, totalSt
             </span>
             <span style={{ fontSize: 13 }}>Erklär in eigenen Worten</span>
           </div>
-          <p style={{ margin: "0 0 4px", fontSize: 16.5, lineHeight: 1.5 }}>
-            {"Warum kannst du bei "}
-            <span style={{ fontFamily: "var(--font-mono)", color: "var(--c-teal)" }}>U = R · I</span>
-            {" nicht eine Größe ändern, ohne dass eine andere mitgeht?"}
-          </p>
-          <p style={{ margin: 0, fontSize: 13.5, color: "var(--c-dim)" }}>{concept.hint}</p>
+          <p style={{ margin: "0 0 4px", fontSize: 16.5, lineHeight: 1.5 }}>{data.prompt}</p>
+          {data.hint && (
+            <p style={{ margin: 0, fontSize: 13.5, color: "var(--c-dim)" }}>{data.hint}</p>
+          )}
 
           <textarea
             ref={taRef}
