@@ -1,0 +1,17 @@
+# Dependencies
+app/node_modules/
+
+# Build output
+app/dist/
+
+# Dev tools
+.DS_Store
+*.local
+.env
+.env.*
+
+# Netlify
+.netlify/
+
+# Logs
+npm-debug.log*

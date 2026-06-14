@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
+      <path d="M26 0L0 0 0 26" fill="none" stroke="rgba(79,210,194,0.06)" stroke-width="0.8"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" fill="#0E1518"/>
+  <!-- Subtle schematic grid -->
+  <rect width="512" height="512" fill="url(#grid)"/>
+
+  <!-- HUD Bracket corners — safe zone 56px padding, arm 60px -->
+  <path d="M56 116 L56 56 L116 56"  fill="none" stroke="#4FD2C2" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M396 56 L456 56 L456 116" fill="none" stroke="#4FD2C2" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M56 396 L56 456 L116 456" fill="none" stroke="#4FD2C2" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M456 396 L456 456 L396 456" fill="none" stroke="#4FD2C2" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Lightning bolt — centered at 256,256 -->
+  <path d="M274 130 L204 263 L246 263 L232 382 L309 228 L260 228 Z" fill="#4FD2C2"/>
+
+  <!-- Ember accent dot at bolt notch -->
+  <circle cx="253" cy="253" r="11" fill="#FFA24D"/>
+</svg>

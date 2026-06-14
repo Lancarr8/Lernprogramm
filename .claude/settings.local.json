@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(update-config)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$d='E:\\Projects\\Lernprogramm\\.claude\\rules'; $files=Get-ChildItem $d -Filter '*.md' -EA SilentlyContinue; $nl=[Environment]::NewLine; $ctx=[string]::Join($nl+$nl+'---'+$nl+$nl, ($files|%{('## '+$_.Name+$nl+$nl+(Get-Content $_.FullName -Raw))})); if($ctx){@{hookSpecificOutput=@{hookEventName='SessionStart';additionalContext=$ctx}}|ConvertTo-Json -Compress}else{'{}'}",
+            "shell": "powershell",
+            "statusMessage": "Lese Session-Regeln..."
+          }
+        ]
+      }
+    ]
+  }
+}
