@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Panel from "../../components/Panel.jsx";
 import Button from "../../components/Button.jsx";
+import CircuitBuilder from "./CircuitBuilder.jsx";
 import { rise } from "../../theme/motion.js";
 
 // SchaltungScreen — Schaltplan lesen/verstehen.
@@ -42,6 +43,42 @@ const eyebrow = {
   letterSpacing: ".1em",
 };
 
+// Frage + aufklappbare Musterlösung (geteilt zwischen interaktiv- und Standard-Render).
+function FrageAntwort({ data, showAntwort, setShowAntwort }) {
+  if (!data.frage && !data.antwort) return null;
+  return (
+    <div style={{ marginTop: 16 }}>
+      {data.frage && (
+        <p style={{ margin: "0 0 12px", fontSize: 15.5, lineHeight: 1.55, color: "var(--c-ink)" }}>
+          {data.frage}
+        </p>
+      )}
+      {data.antwort &&
+        (!showAntwort ? (
+          <Button onClick={() => setShowAntwort(true)}>Lösung anzeigen</Button>
+        ) : (
+          <motion.div
+            {...rise}
+            style={{
+              background: "var(--c-bg2)",
+              border: "1px solid var(--c-edge)",
+              borderLeft: "3px solid var(--c-teal)",
+              borderRadius: "0 8px 8px 0",
+              padding: "12px 13px",
+              fontSize: 14.5,
+              lineHeight: 1.5,
+              fontFamily: "var(--font-mono)",
+              color: "var(--c-teal)",
+              whiteSpace: "pre-line",
+            }}
+          >
+            {data.antwort}
+          </motion.div>
+        ))}
+    </div>
+  );
+}
+
 export default function SchaltungScreen({ data, onComplete, currentStep, totalSteps }) {
   const [showAntwort, setShowAntwort] = useState(false);
 
@@ -52,6 +89,26 @@ export default function SchaltungScreen({ data, onComplete, currentStep, totalSt
           <p style={{ margin: 0, fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--c-teal)" }}>
             Lade…
           </p>
+        </Panel>
+      </Shell>
+    );
+  }
+
+  // Interaktiver Schaltungsaufbau (CircuitBuilder) statt statischem SVG.
+  if (data.schaltplan?.typ === "interaktiv") {
+    return (
+      <Shell currentStep={currentStep} totalSteps={totalSteps}>
+        <Panel>
+          <p style={eyebrow}>SCHALTUNG</p>
+          {data.titel && <h1 style={{ margin: "0 0 8px", fontSize: 20 }}>{data.titel}</h1>}
+          {data.beschreibung && (
+            <p style={{ margin: "0 0 10px", fontSize: 14.5, lineHeight: 1.55 }}>{data.beschreibung}</p>
+          )}
+          <p style={{ margin: "0 0 16px", fontSize: 13, color: "var(--c-dim)", lineHeight: 1.5 }}>
+            {data.schaltplan.hinweis}
+          </p>
+          <CircuitBuilder config={data.schaltplan} onSolved={onComplete} />
+          <FrageAntwort data={data} showAntwort={showAntwort} setShowAntwort={setShowAntwort} />
         </Panel>
       </Shell>
     );

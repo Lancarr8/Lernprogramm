@@ -1,140 +1,287 @@
-# NEXT_STEP.md — Screen-Refaktorierung: Content aus Dateien lesen
+# NEXT_STEP.md — CircuitBuilder: Interaktiver Schaltungsaufbau
 > Aktiver Auftrag für CC. Nicht autonom editieren: Roadmap.md, HANDOFF.md, REQUIREMENTS.md.
 
 ## Scope
-LernseiteScreen + SelfExplanationScreen von hardcoded URI-Inhalt auf
-data-Prop umstellen. Content aus lernseite.js / self-explanation.js lesen.
-URI-Inhalte in die jeweiligen Content-Dateien extrahieren.
-Andere Themenbereiche (tf-02..tf-06) zeigen Fallbacks — kein Crash.
+Neue Komponente `CircuitBuilder.jsx` bauen. SchaltungScreen erkennt
+`typ: "interaktiv"` und rendert den Builder statt dem statischen SVG.
+User verbindet Klemmen per Klick — App prüft ob die Schaltung stimmt.
 
 ## Nicht anfassen
-- FlowController — nicht ändern
-- Alle anderen Screens — nicht ändern
-- HANDOFF.md, Roadmap.md, REQUIREMENTS.md — read-only
+- Alle anderen Screens, FlowController, Progress-Layer — nicht ändern
+- Bestehende SchaltungScreen-Modi (svg-inline, beschreibung-only) — weiter funktionsfähig lassen
 
 ---
 
-## Datenschemas (Vertrag für Content-Dateien)
+## Datenmodell (schaltung.js Schema für typ: "interaktiv")
 
-### lernseite.js Schema
 ```js
-export default {
-  eyebrow: "Lernfeld 1 · Grundlagen",
-  titel: "Das Ohmsche Gesetz",
-  formelText: "Spannung, Strom und Widerstand hängen zusammen — U = R · I",
-  anker: {
-    text: "Eine LED braucht 20 mA und verträgt 2 V. Du hängst sie an 5 V — ohne Vorwiderstand stirbt sie. Genau diesen Widerstand sagt dir das Ohmsche Gesetz.",
-    highlights: ["20 mA", "2 V", "5 V"],  // werden in ember-Farbe gezeigt
-  },
-  warum: {
-    titel: "Das Warum · die Wasser-Analogie",
-    punkte: [
-      { label: "Spannung U", text: "der Druck, der dahintersteht." },
-      { label: "Strom I",    text: "wie viel tatsächlich fließt." },
-      { label: "Widerstand R", text: "die Engstelle, die bremst." },
-    ],
-  },
-  interaktiv: {
-    typ: "uri-dreieck",   // "uri-dreieck" | "formel" | null
-    hint: "Tipp an, was du suchst",
-    modi: {
-      U: { label: "Spannung",    einheit: "V", formel: "U = R · I",
-           worked: ["R = 4 Ω", "I = 3 A", "U = 4 Ω · 3 A = 12 V"], result: "12 V" },
-      R: { label: "Widerstand",  einheit: "Ω", formel: "R = U / I",
-           worked: ["U = 12 V", "I = 3 A", "R = 12 V / 3 A = 4 Ω"], result: "4 Ω" },
-      I: { label: "Strom",       einheit: "A", formel: "I = U / R",
-           worked: ["U = 12 V", "R = 4 Ω", "I = 12 V / 4 Ω = 3 A"], result: "3 A" },
-    },
-  },
-  teaser: "Gleich bist du dran: Erkläre in einem Satz, warum mehr Widerstand den Strom kleiner macht.",
-};
-```
-
-### self-explanation.js Schema
-```js
-export default {
-  prompt: "Warum kannst du bei U = R · I nicht eine Größe ändern, ohne dass eine andere mitgeht?",
-  hint: "Denk an die Wasser-Analogie von vorhin — Druck, Engstelle, Fluss.",
-  keyPoints: [
+{
+  typ: "interaktiv",
+  canvas: { width: 520, height: 260 },
+  bauteile: [
     {
-      id: "kp1",
-      label: "Spannung = der Antrieb",
-      canonical: "Die Spannung U ist die treibende Größe (Druck), die Ladung bewegt.",
-      nudge: "Du hast die treibende Größe noch nicht benannt — was drückt die Ladung durch den Draht?",
-      test: (t) => /spannung/.test(t) && /(treib|drück|druck|antrieb|schieb|kraft|potential|pumpe)/.test(t),
+      id: "bat",
+      typ: "batterie",     // "batterie" | "widerstand" | "led"
+      label: "U = 5 V",
+      cx: 80,  cy: 140,    // Mittelpunkt der Komponente
     },
-    // ... weitere keyPoints
-  ],
-  misconceptions: [
     {
-      id: "mc1",
-      label: "Mehr Widerstand = mehr Strom",
-      fix: "Halt — denk nochmal an die Engstelle: lässt eine engere Stelle mehr oder weniger durch?",
-      test: (t) => /(mehr|höher|größer)[^.]{0,30}widerstand[^.]{0,35}(mehr|höher|größer|steigt)[^.]{0,18}strom/.test(t),
+      id: "r1",
+      typ: "widerstand",
+      label: "R_V = 150 Ω",
+      cx: 220, cy: 70,
+    },
+    {
+      id: "led1",
+      typ: "led",
+      label: "LED",
+      cx: 370, cy: 70,
     },
   ],
-  praiseDeepening: "Stark — alle Kernpunkte sitzen. Jetzt schärfer: Was passiert mit I, wenn U *und* R gleichzeitig steigen?",
-};
+  // Terminals pro Typ (nicht im Data, fix im Code):
+  // batterie:  plus=(cx, cy-35)  minus=(cx, cy+35)
+  // widerstand: links=(cx-40,cy)  rechts=(cx+40,cy)
+  // led:       anode=(cx-25,cy)  kathode=(cx+25,cy)
+
+  loesung: [
+    { von: "bat.plus",      zu: "r1.links"      },
+    { von: "r1.rechts",     zu: "led1.anode"    },
+    { von: "led1.kathode",  zu: "bat.minus"     },
+  ],
+  hinweis: "Verbinde die Klemmen so dass der Strom vom + Pol der Batterie durch Widerstand und LED zurück zum − Pol fließt.",
+}
 ```
 
 ---
 
-## Task 1 — lernseite.js für tf-01-uri befüllen
+## Task 1 — schaltung.js für tf-01-uri auf "interaktiv" umstellen
 
-Schreibe `app/src/content/lf-01/tf-01-uri/lernseite.js` mit dem vollständigen
-Schema (s.o.) — alle Werte aus dem aktuellen `LernseiteScreen.jsx` extrahieren.
-Das sind: MODES-Daten, Anker-Text, Wasser-Analogie-Punkte, Formel-Text, Teaser.
-
----
-
-## Task 2 — self-explanation.js für tf-01-uri befüllen
-
-Schreibe `app/src/content/lf-01/tf-01-uri/self-explanation.js` mit dem
-vollständigen Schema — alle Werte aus `CONCEPT_URI` in `SelfExplanationScreen.jsx`
-extrahieren (inkl. der test-Funktionen — .js-Dateien dürfen Funktionen enthalten).
+Überschreibe `app/src/content/lf-01/tf-01-uri/schaltung.js` mit dem
+interaktiven Schema (s.o.). Behalte `beschreibung`, `frage`, `antwort`,
+`aufgebautMit` — nur `schaltplan`-Block ersetzen.
 
 ---
 
-## Task 3 — LernseiteScreen auf data-Prop umstellen
+## Task 2 — CircuitBuilder.jsx bauen
 
-Update `app/src/screens/flow/LernseiteScreen.jsx`:
+Erstelle `app/src/screens/flow/CircuitBuilder.jsx`.
 
-**Änderungen:**
-- Hardcoded `MODES`-Konstante entfernen
-- Content aus `props.data` lesen (kommt als Prop von FlowController)
-- Fallback wenn `data` null (laden) oder leer (Inhalt folgt):
-  ```jsx
-  if (!data || Object.keys(data).length === 0) {
-    return <PlaceholderShell titel="Lernseite" currentStep={currentStep} totalSteps={totalSteps} onComplete={onComplete} />;
-  }
-  ```
-- Interaktiv-Block: nur rendern wenn `data.interaktiv.typ === "uri-dreieck"`,
-  dann `data.interaktiv.modi` statt MODES verwenden
-- Für `typ === "formel"` oder null: einfache Formel-Card ohne Triangle
-- Anker-Text: `data.anker.highlights`-Wörter in ember-Farbe markieren
-- Warum-Accordion: `data.warum.punkte` iterieren
-- Teaser: `data.teaser`
-
-**PlaceholderShell** (lokal im File, kein extra Import):
+### Props
 ```jsx
-function PlaceholderShell({ titel, currentStep, totalSteps, onComplete }) {
+<CircuitBuilder
+  config={data.schaltplan}   // { canvas, bauteile, loesung, hinweis }
+  onSolved={onComplete}      // wird aufgerufen wenn Schaltung korrekt
+/>
+```
+
+### State
+```js
+const [wires, setWires] = useState([]);          // [{ von, zu }]
+const [selected, setSelected] = useState(null);  // "bat.plus" etc.
+const [solved, setSolved] = useState(false);
+const [wrongFlash, setWrongFlash] = useState(false);
+```
+
+### Terminal-Positionen (fix per Bauteil-Typ)
+```js
+function getTerminals(bauteil) {
+  const { id, typ, cx, cy } = bauteil;
+  if (typ === "batterie")  return {
+    [`${id}.plus`]:    { x: cx, y: cy - 35, label: "+" },
+    [`${id}.minus`]:   { x: cx, y: cy + 35, label: "−" },
+  };
+  if (typ === "widerstand") return {
+    [`${id}.links`]:   { x: cx - 40, y: cy, label: "" },
+    [`${id}.rechts`]:  { x: cx + 40, y: cy, label: "" },
+  };
+  if (typ === "led") return {
+    [`${id}.anode`]:   { x: cx - 25, y: cy, label: "A" },
+    [`${id}.kathode`]: { x: cx + 25, y: cy, label: "K" },
+  };
+  return {};
+}
+
+// Alle Terminals zusammenführen
+function getAllTerminals(bauteile) {
+  return Object.assign({}, ...bauteile.map(getTerminals));
+}
+```
+
+### Klick-Logik
+```js
+function handleTerminalClick(terminalId) {
+  if (solved) return;
+
+  if (!selected) {
+    setSelected(terminalId);
+    return;
+  }
+
+  if (selected === terminalId) {
+    setSelected(null);
+    return;
+  }
+
+  // Gleiche Komponente? Nicht erlaubt.
+  const sameComponent = selected.split(".")[0] === terminalId.split(".")[0];
+  if (sameComponent) { setSelected(null); return; }
+
+  // Bereits verbunden?
+  const alreadyConnected = wires.some(
+    (w) => (w.von === selected && w.zu === terminalId) ||
+            (w.von === terminalId && w.zu === selected)
+  );
+  if (alreadyConnected) { setSelected(null); return; }
+
+  // Draht hinzufügen
+  const newWires = [...wires, { von: selected, zu: terminalId }];
+  setWires(newWires);
+  setSelected(null);
+
+  // Prüfen ob gelöst
+  checkSolution(newWires);
+}
+
+function checkSolution(currentWires) {
+  const allCorrect = config.loesung.every((req) =>
+    currentWires.some(
+      (w) => (w.von === req.von && w.zu === req.zu) ||
+              (w.von === req.zu  && w.zu === req.von)
+    )
+  );
+  if (allCorrect) setSolved(true);
+}
+```
+
+### Draht-Rendering (L-förmiges Routing)
+```js
+function wirePath(t1, t2) {
+  const midX = (t1.x + t2.x) / 2;
+  // Horizontal bis Mitte, dann vertikal, dann horizontal
+  return `M ${t1.x} ${t1.y} L ${midX} ${t1.y} L ${midX} ${t2.y} L ${t2.x} ${t2.y}`;
+}
+```
+
+### Bauteil-Rendering (SVG-Funktionen)
+
+**Batterie:**
+```js
+function BatterieSymbol({ cx, cy, label }) {
   return (
-    <div className="grid-bg" style={{ minHeight: "100%", display: "flex",
-      justifyContent: "center", padding: 24 }}>
-      <motion.div {...rise} style={{ width: "100%", maxWidth: 520 }}>
-        <div style={{ display: "flex", justifyContent: "space-between",
-          marginBottom: 14, fontFamily: "var(--font-mono)", fontSize: 12 }}>
-          <span style={{ color: "var(--c-dim)" }}>LERNSEITE</span>
-          <span style={{ color: "var(--c-teal)" }}>Schritt {currentStep} / {totalSteps}</span>
-        </div>
+    <g>
+      <line x1={cx} y1={cy-35} x2={cx} y2={cy-10} stroke="var(--c-teal)" strokeWidth="2"/>
+      <line x1={cx-15} y1={cy-10} x2={cx+15} y2={cy-10} stroke="var(--c-teal)" strokeWidth="3" strokeLinecap="round"/>
+      <line x1={cx-9}  y1={cy}    x2={cx+9}  y2={cy}    stroke="var(--c-teal)" strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1={cx} y1={cy} x2={cx} y2={cy+35} stroke="var(--c-teal)" strokeWidth="2"/>
+      <text x={cx+20} y={cy-8}  fill="var(--c-ember)" fontFamily="var(--font-mono)" fontSize="11">+</text>
+      <text x={cx+20} y={cy+5}  fill="var(--c-dim)"   fontFamily="var(--font-mono)" fontSize="11">−</text>
+      <text x={cx}    y={cy+55} fill="var(--c-teal)"  fontFamily="var(--font-mono)" fontSize="10" textAnchor="middle">{label}</text>
+    </g>
+  );
+}
+```
+
+**Widerstand:**
+```js
+function WiderstandSymbol({ cx, cy, label }) {
+  return (
+    <g>
+      <line x1={cx-40} y1={cy} x2={cx-20} y2={cy} stroke="var(--c-teal)" strokeWidth="2"/>
+      <rect x={cx-20} y={cy-12} width="40" height="24" rx="3"
+        fill="var(--c-bg)" stroke="var(--c-teal)" strokeWidth="2"/>
+      <line x1={cx+20} y1={cy} x2={cx+40} y2={cy} stroke="var(--c-teal)" strokeWidth="2"/>
+      <text x={cx} y={cy-18} fill="var(--c-ink)" fontFamily="var(--font-mono)" fontSize="10" textAnchor="middle">{label}</text>
+    </g>
+  );
+}
+```
+
+**LED:**
+```js
+function LEDSymbol({ cx, cy, label }) {
+  return (
+    <g>
+      <line x1={cx-25} y1={cy} x2={cx-15} y2={cy} stroke="var(--c-teal)" strokeWidth="2"/>
+      <polygon points={`${cx-15},${cy-13} ${cx-15},${cy+13} ${cx+8},${cy}`}
+        fill="rgba(255,162,77,0.15)" stroke="var(--c-ember)" strokeWidth="2" strokeLinejoin="round"/>
+      <line x1={cx+8} y1={cy-13} x2={cx+8} y2={cy+13} stroke="var(--c-ember)" strokeWidth="2.5" strokeLinecap="round"/>
+      <line x1={cx+8} y1={cy} x2={cx+25} y2={cy} stroke="var(--c-teal)" strokeWidth="2"/>
+      {/* Lichtpfeile */}
+      <line x1={cx+14} y1={cy-8}  x2={cx+22} y2={cy-18} stroke="var(--c-ember)" strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1={cx+19} y1={cy-4}  x2={cx+28} y2={cy-14} stroke="var(--c-ember)" strokeWidth="1.5" strokeLinecap="round"/>
+      <text x={cx} y={cy+28} fill="var(--c-ember)" fontFamily="var(--font-mono)" fontSize="10" textAnchor="middle">{label}</text>
+    </g>
+  );
+}
+```
+
+### Terminal-Dots
+Klemmen als Kreise rendern:
+```jsx
+{Object.entries(allTerminals).map(([id, pos]) => {
+  const isSelected = selected === id;
+  const isConnected = wires.some(w => w.von === id || w.zu === id);
+  return (
+    <circle
+      key={id}
+      cx={pos.x} cy={pos.y} r={isSelected ? 9 : 6}
+      fill={isSelected ? "var(--c-teal)" : isConnected ? "var(--c-ember)" : "var(--c-bg2)"}
+      stroke={isSelected ? "var(--c-teal)" : "var(--c-edge)"}
+      strokeWidth="2"
+      style={{ cursor: solved ? "default" : "pointer" }}
+      onClick={() => handleTerminalClick(id)}
+    />
+  );
+})}
+```
+
+### Gelöst-State
+```jsx
+{solved && (
+  <motion.div {...rise} style={{ textAlign: "center", marginTop: 16 }}>
+    <p style={{ color: "var(--c-teal)", fontFamily: "var(--font-mono)", fontSize: 13, marginBottom: 12 }}>
+      ✓ Schaltung korrekt — Strom kann fließen
+    </p>
+    <Button variant="go" onClick={onSolved}>Weiter</Button>
+  </motion.div>
+)}
+```
+
+### Reset-Button
+```jsx
+{!solved && wires.length > 0 && (
+  <button
+    onClick={() => { setWires([]); setSelected(null); }}
+    style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--c-dim)",
+      background: "none", border: "none", cursor: "pointer", marginTop: 8 }}
+  >
+    Zurücksetzen
+  </button>
+)}
+```
+
+---
+
+## Task 3 — SchaltungScreen: CircuitBuilder einbinden
+
+In `SchaltungScreen.jsx`:
+```jsx
+import CircuitBuilder from "./CircuitBuilder.jsx";
+
+// Im Render, nach den bestehenden Checks:
+if (data.schaltplan?.typ === "interaktiv") {
+  return (
+    <div className="grid-bg" ...>
+      <motion.div {...rise} style={{ width: "100%", maxWidth: 560 }}>
+        {/* Step indicator */}
+        ...
         <Panel>
-          <p style={{ margin: "0 0 6px", color: "var(--c-dim)",
-            fontFamily: "var(--font-mono)", fontSize: 12 }}>{titel.toUpperCase()}</p>
-          <p style={{ margin: "0 0 20px", fontSize: 15, lineHeight: 1.6 }}>
-            Inhalt folgt in Kürze.
-          </p>
-          <Button variant="go" onClick={onComplete}>Weiter</Button>
+          <p style={{ ...eyebrow }}>SCHALTUNG</p>
+          <p style={{ fontSize: 15, marginBottom: 4 }}>{data.titel}</p>
+          <p style={{ fontSize: 13, color: "var(--c-dim)", marginBottom: 16 }}>{data.schaltplan.hinweis}</p>
+          <CircuitBuilder config={data.schaltplan} onSolved={onComplete} />
         </Panel>
+        {/* frage/antwort Toggle darunter */}
       </motion.div>
     </div>
   );
@@ -143,80 +290,57 @@ function PlaceholderShell({ titel, currentStep, totalSteps, onComplete }) {
 
 ---
 
-## Task 4 — SelfExplanationScreen auf data-Prop umstellen
-
-Update `app/src/screens/flow/SelfExplanationScreen.jsx`:
-
-**Änderungen:**
-- Hardcoded `CONCEPT_URI` entfernen
-- Concept aus `props.data` lesen
-- Fallback wenn `data` null oder leer:
-  ```jsx
-  if (!data || !data.keyPoints) {
-    return <PlaceholderShell titel="Self-Explanation" ... />;
-  }
-  ```
-- `classifyExplanation(raw, data)` statt `classifyExplanation(raw, CONCEPT_URI)`
-- `buildFeedback(result, data)` statt `buildFeedback(result, CONCEPT_URI)`
-- Prompt + Hint aus `data.prompt` / `data.hint`
-
----
-
 ## Definition of Done
 
 - [ ] `npm run lint` → 0 Errors
 - [ ] `npm run build` → 0 Errors
-- [ ] tf-01-uri Flow funktioniert end-to-end (Inhalt kommt aus Content-Dateien)
-- [ ] tf-02-reihe Flow: alle Screens zeigen Fallback, kein Crash
-- [ ] LernseiteScreen hat keine hardcodierten MODES mehr
-- [ ] SelfExplanationScreen hat kein hardcodiertes CONCEPT_URI mehr
-- [ ] lernseite.js + self-explanation.js für tf-01-uri vollständig befüllt
+- [ ] tf-01-uri Schaltung: 3 Klemmen verbindbar, bei korrekter Schaltung → "Weiter"
+- [ ] Falsche Verbindung (gleiche Komponente): wird ignoriert
+- [ ] Reset-Button funktioniert
+- [ ] Bestehende modi (svg-inline, beschreibung-only) weiter funktionsfähig
+- [ ] Kein hardcoded Hex
 
 ## Wenn fertig
-Schreibe am Ende dieser Datei: `## STATUS: REFACTORING COMPLETE`
-und liste auf was geändert wurde. Warte dann auf Nicos Review.
+Schreibe: `## STATUS: CIRCUITBUILDER COMPLETE`
+und liste auf was gebaut wurde. Warte auf Nicos Review.
 
 ---
 
-## STATUS: REFACTORING COMPLETE
+## STATUS: CIRCUITBUILDER COMPLETE
 
 Erledigt am 2026-06-14:
 
-**Task 1 — `lernseite.js` (tf-01-uri) befüllt.**
-- Vollständiges Schema: eyebrow, titel, formelText, anker (text + highlights `["20 mA","2 V","5 V"]`),
-  warum (Wasser-Analogie, 3 Punkte), interaktiv (`typ: "uri-dreieck"`, hint, modi U/R/I mit
-  einheit/formel/worked/result), teaser. Alle Werte aus dem alten LernseiteScreen extrahiert.
+**Task 1 — `schaltung.js` (tf-01-uri) auf `typ: "interaktiv"` umgestellt.**
+- Nur der `schaltplan`-Block ersetzt (canvas 520×260, 3 Bauteile bat/r1/led1, loesung mit
+  3 Verbindungen, hinweis). `beschreibung`, `frage`, `antwort`, `aufgebautMit` unverändert behalten.
+- **Hinweis:** Dein bisheriger statischer `svg-inline`-Schaltplan (das schöne IEC/DIN-SVG) wurde
+  dabei ersetzt — so vom Task vorgegeben. Er steckt noch in der Git-Historie, falls du ihn
+  zurück willst.
 
-**Task 2 — `self-explanation.js` (tf-01-uri) befüllt.**
-- Komplette Konzept-Karte aus `CONCEPT_URI`: prompt, hint, 4 keyPoints (inkl. `test`-Heuristik-
-  Funktionen, .js erlaubt das), 3 misconceptions (mit `test`), praiseDeepening. 1:1 übernommen,
-  AI-Grenze gewahrt (autorisierter Inhalt, nicht generiert).
+**Task 2 — `CircuitBuilder.jsx` gebaut.**
+- `getTerminals`/`getAllTerminals` (Klemmen fix pro Typ im Code), `wirePath` (L-Routing),
+  SVG-Symbole Batterie/Widerstand/LED, Klemmen-Dots (klickbar), Klick-Logik
+  (`handleTerminalClick` + `checkSolution`), Gelöst-State + Reset-Button.
+- `wrongFlash` aus der Scaffold-Vorlage **weggelassen** — wurde im Spec-Code nie gesetzt und
+  ist nicht Teil der DoD; ein deklarierter, ungenutzter State hätte Lint-Warnings erzeugt.
+- LED-Polygon-Füllung: statt hardcodiertem `rgba(255,162,77,0.15)` jetzt
+  `color-mix(in srgb, var(--c-ember) 15%, transparent)` (DoD: kein Hex; kein neues Token nötig).
 
-**Task 3 — `LernseiteScreen.jsx` auf data-Prop umgestellt.**
-- Hardcodierte `MODES`-Konstante entfernt. Inhalt kommt aus `props.data`.
-- `PlaceholderShell` (lokal) + Guard `if (!data || Object.keys(data).length === 0)`.
-- Interaktiv-Block typabhängig: `uri-dreieck` → Dreieck mit `data.interaktiv.modi`;
-  `formel` → einfache Formel-Card; sonst nichts. Anker-Highlights generisch via Helper
-  (`renderHighlighted`), Warum-Akkordeon iteriert `data.warum.punkte`, Teaser aus `data.teaser`.
-- Hooks vor dem Early-Return (rules-of-hooks gewahrt).
-
-**Task 4 — `SelfExplanationScreen.jsx` auf data-Prop umgestellt.**
-- Hardcodiertes `CONCEPT_URI` entfernt. `concept = data`. classify/buildFeedback nutzen `data`.
-- `PlaceholderShell` (lokal) + Guard `if (!data || !data.keyPoints)`.
-- Prompt aus `data.prompt`, Hint aus `data.hint`. Klassifikator-/Feedback-Logik unverändert
-  (Austausch-Punkt-Vertrag intakt). Demo-Buttons bleiben DEV-only.
+**Task 3 — `SchaltungScreen.jsx`: CircuitBuilder eingebunden.**
+- Früher Branch `if (data.schaltplan?.typ === "interaktiv")` → rendert Builder + Hinweis +
+  Frage/Lösung-Toggle. Frage/Antwort-Toggle in lokale `FrageAntwort`-Komponente ausgelagert
+  (im interaktiv-Branch genutzt).
+- Bestehende Pfade (`svg-inline`, `beschreibung-only`, Lade-/Standard-Render) **unverändert** —
+  der neue Branch ist ein Early-Return davor.
 
 **Verifikation (Lint + Build + Laufzeit, DOM-verifiziert):**
 - ✅ `npm run lint` 0/0 · ✅ `npm run build` 0 Errors.
-- ✅ **tf-01-uri** end-to-end aus Content-Dateien: Lernseite (Eyebrow/Titel/Formel/Anker-Highlight
-  „20 mA" / Warum-Akkordeon / Dreieck 12 V→4 Ω / Teaser) · Self-Explanation (Prompt + Hint aus
-  Datei, Coach „Sitzt — alle Kernpunkte" → „Weiter zur Schaltung").
-- ✅ **tf-02-reihe** (leeres `{}`): Lernseite- und Self-Explanation-Placeholder greifen, „Weiter"
-  führt durch, kein Crash. (Auch Aufgaben/Schaltung/Bauen zeigen ihre Fallbacks.)
-- ✅ LernseiteScreen ohne MODES, SelfExplanationScreen ohne CONCEPT_URI. Keine Konsolenfehler.
-
-**Hinweise für Nico:**
-- `lernseite.js` rendert `formelText` so, dass der Teil nach „—" teal hervorgehoben wird, und
-  `warum.titel` so, dass der Teil vor „ · " teal ist — generisch über alle Themenbereiche.
-- Mir ist aufgefallen, dass du `aufgaben.js` für tf-01-uri inzwischen mit 4 echten Aufgaben
-  befüllt hast (R=100 Ω … etc.) — lief im Test einwandfrei, ist aber nicht Teil dieses Auftrags.
+- ✅ tf-01-uri Schaltung (Schritt 4): Builder rendert (6 Klemmen, Hinweis).
+- ✅ Gleiche-Komponente-Klick (bat.plus + bat.minus) → ignoriert (0 Drähte).
+- ✅ Korrekte Verbindung → Draht erscheint · Reset-Button leert Drähte.
+- ✅ Alle 3 korrekten Verbindungen → „✓ Schaltung korrekt — Strom kann fließen" + „Weiter" →
+  führt zu Schritt 5. „Lösung anzeigen" zeigt die Musterlösung.
+- ✅ Keine Konsolenfehler. Kein hardcoded Hex in CircuitBuilder.
+- Hinweis zu „bestehende modi": `svg-inline`/`beschreibung-only`-Code ist unangetastet (nur
+  Early-Return davor eingefügt) und war in Phase 4 bereits verifiziert — daher nicht erneut
+  durchgeklickt (kein aktiver Themenbereich nutzt diese modi mehr).
