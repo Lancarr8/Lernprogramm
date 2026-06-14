@@ -56,8 +56,8 @@ Content — nie hardcoded im Component.
 | `lernseite` | Realwelt-Anker + Warum + interaktive Formel/Visual |
 | `aufgaben` | Gestufte Aufgaben (leicht → schwer), sofortiges Feedback |
 | `self-explanation` | Azubi erklärt in eigenen Worten, App klassifiziert |
-| `schaltung` | Schaltplan lesen/verstehen (statisch oder interaktiv) |
-| `selbst-bauen` | Aufbauanleitung / Praxisaufgabe |
+| `schaltung` | Schaltplan lesen/verstehen — statisch (SVG), beschreibung-only, oder interaktiv (CircuitBuilder) |
+| `selbst-bauen` | Aufbauanleitung / Praxisaufgabe mit abhakbarer Checkliste |
 
 Reihenfolge ist pro Themenbereich frei definierbar.
 Überspringen nur nach Abschluss des vorherigen Schritts.
@@ -126,88 +126,102 @@ Inhalte liegen als statische JS/JSON-Dateien im Bundle:
 src/
 └── content/
     ├── index.js              ← Alle 13 Lernfelder registriert
-    ├── lf-01/
-    │   ├── index.js          ← Meta + offizielle Inhalte + Themenfelder
-    │   └── tf-01-uri/
-    │       ├── index.js      ← Schrittliste: [{type, data}, ...]
-    │       ├── lernseite.js
-    │       ├── aufgaben.js
-    │       ├── self-explanation.js
-    │       ├── schaltung.js
-    │       └── selbst-bauen.js
+    ├── lf-01/                ← ✅ vollständig befüllt (6 Themenbereiche)
+    │   ├── index.js
+    │   ├── tf-01-uri/        ← Ohmsches Gesetz
+    │   ├── tf-02-reihe/      ← Reihenschaltung
+    │   ├── tf-03-parallel/   ← Parallelschaltung
+    │   ├── tf-04-schaltzeichen/
+    │   ├── tf-05-messen/
+    │   └── tf-06-sicherheit/
     ├── lf-02/ … lf-13/      ← Struktur vorhanden, Inhalte TODO
 ```
-
-Neues Themenbereich hinzufügen = Ordner + Dateien anlegen + in lf-xx/index.js registrieren.
-Kein CMS, kein Backend, kein Build-Step nötig.
 
 ---
 
 ## Roadmap
 
-### ✅ Phase 0 — Foundation (erledigt)
-- Design-System (Tokens, Farben, Fonts, Radii)
-- Motion-Layer (Framer Motion, Varianten)
-- Shared Primitives (Panel, Button, BracketCorners)
-- App-Shell (main.jsx, App.jsx, global.css)
-- Referenz-Screens (uri_slice_prototype, self_explanation_screen_v1)
+### ✅ Phase 0 — Foundation
+Design-System, Motion-Layer, Primitives, App-Shell, Referenz-Screens.
 
-### ✅ Phase 1 — Core Architecture (erledigt)
-- ESLint + Prettier
-- vite-plugin-pwa + Service Worker + Web Manifest
-- App-Icon (Bracket Bolt, 192 + 512px)
-- Daten-Layer: src/data/progress.js
-- Content-Struktur: alle 13 Lernfelder als Skeleton
-- Router: src/router.jsx
+### ✅ Phase 1 — Core Architecture
+ESLint, PWA, App-Icon (Bracket Bolt), Daten-Layer, Content-Skeleton, Router.
 
-### ✅ Phase 2 — Navigation Screens (erledigt)
-- Landing Screen, Dashboard, Lernfeld-Detail
-- ProgressBar als shared Komponente
+### ✅ Phase 2 — Navigation Screens
+Landing, Dashboard, Lernfeld-Detail, ProgressBar.
 
-### ✅ Phase 3 — Lernablauf Screens (erledigt)
-- FlowController + 5 Screen-Typen
-- LernseiteScreen + SelfExplanationScreen migriert
-- Aufgaben / Schaltung / Selbst-bauen als Shells
+### ✅ Phase 3 — Lernablauf Screens
+FlowController, 5 Screen-Typen, CircuitBuilder (click-to-connect).
 
-### ✅ Phase 4 — Content-System (erledigt)
-- Token --c-warn-soft/--c-warn-edge
-- stepData-Loading im FlowController
-- AufgabenScreen, SchaltungScreen, SelbstBauenScreen funktional
-- TODO-Stubs für Nico in tf-01-uri Content-Dateien
+### ✅ Phase 4 — Content-System
+stepData-Loading, AufgabenScreen/SchaltungScreen/SelbstBauenScreen funktional,
+TF.js Universal Sentence Encoder für Self-Explanation (lokal, offline, kostenlos).
 
-### 🔄 Phase 5 — Deployment (in Arbeit)
-- [ ] .gitignore + netlify.toml (CC erledigt)
-- [ ] Production-Build verifiziert
-- [ ] Git-Repo + Netlify-Deploy (Nico manuell)
-- [ ] PWA-Test im Browser
+### ✅ Phase 5 — Deployment
+Netlify (live: boisterous-tanuki-7f909f.netlify.app), PWA installierbar,
+Git-Repo: github.com/Lancarr8/Lernprogramm.
 
-### 📝 Nico — Content befüllen (parallel zu Phase 5)
-- [ ] tf-01-uri/aufgaben.js
-- [ ] tf-01-uri/schaltung.js
-- [ ] tf-01-uri/selbst-bauen.js
-- [ ] Weitere Themenbereiche in lf-01 anlegen
+### ✅ LF1 — Inhalt vollständig
+6 Themenbereiche komplett befüllt: URI, Reihenschaltung, Parallelschaltung,
+Schaltzeichen, Messverfahren, Sicherheit.
 
-### 🌐 Phase 6 — Landing Page
-- [ ] Eigene Website oder Netlify-Page
-- [ ] PWA-Install-Button
-- [ ] Kurze App-Beschreibung
+### 🔄 Laufend — LF2–13 Content
+LF für LF befüllen: Nico prüft fachlich, Chat-Claude draftet Inhalt.
+Reihenfolge: LF2 → LF3 → LF4 (1. Lehrjahr zuerst).
+
+### 🌐 Offen — Phase 6: Landing Page
+Eigene Website, PWA-Install-Button, kurze App-Beschreibung.
 
 ---
 
-## Zukünftige Versionen
+## V2 — Geplante Features
+
+### 1. Wissensabfrage zwischen Lernfeldern
+*Pedagogisch: Testen ob das gesamte Lernfeld sitzt bevor weiter.*
+
+- Neuer Screen-Typ: `wissensabfrage`
+- Erscheint im LernfeldScreen wenn alle Themenbereiche abgeschlossen
+- Zieht zufällig 8–10 Fragen aus allen `aufgaben.js` Dateien des Lernfelds
+- Bestanden bei ≥ 70% → Lernfeld offiziell "abgeschlossen" (grüner Haken im Dashboard)
+- Nicht bestanden → schwächste Themenbereiche als "Wiederholen empfohlen" markiert
+- Content: keine neue Datei nötig — zieht aus bestehenden `aufgaben.js`
+
+### 2. Spaced Repetition / Wiederholung
+*Pedagogisch: Was man vergisst, muss man wiederholen — zum richtigen Zeitpunkt.*
+
+- Datenmodell-Erweiterung: `score` und `lastPracticed` pro Themenbereich speichern
+- Algorithmus (vereinfacht): Themenbereich nach 3 Tagen ohne Wiederholung → "Wiederholen"
+- Dashboard: "Jetzt wiederholen" Banner mit den fälligen Themenbereichen
+- LernfeldScreen: Badge "⚠ Wiederholen" bei Themenbereichen unter Schwellwert
+- "Wiederholen"-Button startet Flow ab Schritt 1 mit neuem Seed für Aufgaben
+
+### 3. CircuitBuilder in mehr Themenbereichen
+*Pedagogisch: Selbst verdrahten ist der stärkste Lerneffekt.*
+
+- tf-03-parallel: Parallelschaltung (R1 ∥ R2) — komplex durch geteilte Knoten, braucht Node-Konzept im CircuitBuilder
+- tf-05-messen: Messschaltung — Voltmeter und Amperemeter richtig platzieren
+- Dafür: CircuitBuilder um Node-Typ erweitern (ein Punkt, mehrere Verbindungen)
+- Content: `schaltplan.typ = "interaktiv"` in jeweiliger `schaltung.js`
+
+---
+
+## Zukünftige Versionen (V3+)
 
 | Feature | Aufwand | Priorität |
 |---|---|---|
-| LF 02–13 inhaltlich befüllen (12 Lernfelder offen) | Sehr hoch | Nach V1 |
+| LF 02–13 inhaltlich befüllen | Sehr hoch | Laufend |
 | .exe / Electron | Mittel | Optional |
-| Cross-Device Sync (Supabase) | Hoch | Nach V1 |
-| LLM-Swap für classifyExplanation | Mittel | Nach V1 |
-| Echter Schaltungseditor | Sehr hoch | V3+ |
+| Cross-Device Sync (Supabase) | Hoch | V3 |
+| Echter Drag & Drop Schaltungseditor | Sehr hoch | V3+ |
+| Lehrer-Dashboard (Klassenfortschritt) | Hoch | V3+ |
+| Mehrsprachig (Englisch) | Mittel | V3+ |
 
 ---
 
 ## AI-Grenze (unveränderlich)
 
 `classifyExplanation()` ist der einzige KI-Berührungspunkt.
+Nutzt TensorFlow.js Universal Sentence Encoder — lokal im Browser,
+offline-fähig, kein API-Key, keine Kosten.
 Klassifiziert Azubi-Text gegen autorisierte Konzeptkarte.
-Generiert niemals Fachinhalt. Bleibt Heuristik bis explizit getauscht.
+Generiert niemals Fachinhalt.
