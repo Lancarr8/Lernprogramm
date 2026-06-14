@@ -1,292 +1,160 @@
-# NEXT_STEP.md — CircuitBuilder: Interaktiver Schaltungsaufbau
-> Aktiver Auftrag für CC. Nicht autonom editieren: Roadmap.md, HANDOFF.md, REQUIREMENTS.md.
+# NEXT_STEP.md — Classifier: Wechsel auf TensorFlow.js
+> Aktiver Auftrag für CC. Nur classifier.js + vite.config.js + packages ändern.
+> Nicht autonom editieren: Roadmap.md, HANDOFF.md, REQUIREMENTS.md.
 
-## Scope
-Neue Komponente `CircuitBuilder.jsx` bauen. SchaltungScreen erkennt
-`typ: "interaktiv"` und rendert den Builder statt dem statischen SVG.
-User verbindet Klemmen per Klick — App prüft ob die Schaltung stimmt.
-
-## Nicht anfassen
-- Alle anderen Screens, FlowController, Progress-Layer — nicht ändern
-- Bestehende SchaltungScreen-Modi (svg-inline, beschreibung-only) — weiter funktionsfähig lassen
+## Warum
+@xenova/transformers + ONNX Runtime hängt im Browser (SharedArrayBuffer-Problem).
+TensorFlow.js nutzt WebGL — kein ONNX, kein SharedArrayBuffer, funktioniert in jedem Browser.
 
 ---
 
-## Datenmodell (schaltung.js Schema für typ: "interaktiv")
+## Task 1 — Pakete tauschen
 
-```js
-{
-  typ: "interaktiv",
-  canvas: { width: 520, height: 260 },
-  bauteile: [
-    {
-      id: "bat",
-      typ: "batterie",     // "batterie" | "widerstand" | "led"
-      label: "U = 5 V",
-      cx: 80,  cy: 140,    // Mittelpunkt der Komponente
-    },
-    {
-      id: "r1",
-      typ: "widerstand",
-      label: "R_V = 150 Ω",
-      cx: 220, cy: 70,
-    },
-    {
-      id: "led1",
-      typ: "led",
-      label: "LED",
-      cx: 370, cy: 70,
-    },
-  ],
-  // Terminals pro Typ (nicht im Data, fix im Code):
-  // batterie:  plus=(cx, cy-35)  minus=(cx, cy+35)
-  // widerstand: links=(cx-40,cy)  rechts=(cx+40,cy)
-  // led:       anode=(cx-25,cy)  kathode=(cx+25,cy)
-
-  loesung: [
-    { von: "bat.plus",      zu: "r1.links"      },
-    { von: "r1.rechts",     zu: "led1.anode"    },
-    { von: "led1.kathode",  zu: "bat.minus"     },
-  ],
-  hinweis: "Verbinde die Klemmen so dass der Strom vom + Pol der Batterie durch Widerstand und LED zurück zum − Pol fließt.",
-}
+```bash
+cd app
+npm uninstall @xenova/transformers
+npm install @tensorflow/tfjs @tensorflow-models/universal-sentence-encoder
 ```
 
 ---
 
-## Task 1 — schaltung.js für tf-01-uri auf "interaktiv" umstellen
+## Task 2 — vite.config.js bereinigen
 
-Überschreibe `app/src/content/lf-01/tf-01-uri/schaltung.js` mit dem
-interaktiven Schema (s.o.). Behalte `beschreibung`, `frage`, `antwort`,
-`aufgebautMit` — nur `schaltplan`-Block ersetzen.
+`optimizeDeps.exclude: ["@xenova/transformers"]` entfernen.
+Falls keine anderen excludes mehr da sind, den ganzen `optimizeDeps`-Block entfernen.
 
 ---
 
-## Task 2 — CircuitBuilder.jsx bauen
+## Task 3 — classifier.js neu schreiben
 
-Erstelle `app/src/screens/flow/CircuitBuilder.jsx`.
+Ersetze den gesamten Inhalt von `app/src/data/classifier.js`:
 
-### Props
-```jsx
-<CircuitBuilder
-  config={data.schaltplan}   // { canvas, bauteile, loesung, hinweis }
-  onSolved={onComplete}      // wird aufgerufen wenn Schaltung korrekt
-/>
-```
-
-### State
 ```js
-const [wires, setWires] = useState([]);          // [{ von, zu }]
-const [selected, setSelected] = useState(null);  // "bat.plus" etc.
-const [solved, setSolved] = useState(false);
-const [wrongFlash, setWrongFlash] = useState(false);
-```
+// classifier.js — Semantische Klassifikation via TensorFlow.js Universal Sentence Encoder.
+// Kein ONNX, kein SharedArrayBuffer — läuft per WebGL in jedem modernen Browser.
+// Kontrastiver Ansatz für Fehlvorstellungen: MC feuert nur wenn ähnlicher als alle KPs.
 
-### Terminal-Positionen (fix per Bauteil-Typ)
-```js
-function getTerminals(bauteil) {
-  const { id, typ, cx, cy } = bauteil;
-  if (typ === "batterie")  return {
-    [`${id}.plus`]:    { x: cx, y: cy - 35, label: "+" },
-    [`${id}.minus`]:   { x: cx, y: cy + 35, label: "−" },
-  };
-  if (typ === "widerstand") return {
-    [`${id}.links`]:   { x: cx - 40, y: cy, label: "" },
-    [`${id}.rechts`]:  { x: cx + 40, y: cy, label: "" },
-  };
-  if (typ === "led") return {
-    [`${id}.anode`]:   { x: cx - 25, y: cy, label: "A" },
-    [`${id}.kathode`]: { x: cx + 25, y: cy, label: "K" },
-  };
-  return {};
+import * as tf from "@tensorflow/tfjs";
+import * as use from "@tensorflow-models/universal-sentence-encoder";
+
+const KP_THRESHOLD = 0.58;
+const MC_MIN       = 0.70;
+const MC_CONTRAST  = 0.02;
+
+let model = null;
+let loadingPromise = null;
+
+export async function loadClassifier(onProgress) {
+  if (model) return model;
+  if (loadingPromise) return loadingPromise;
+
+  // TF.js meldet keinen Fortschritt — onProgress einmalig mit 50% simulieren
+  if (onProgress) onProgress({ status: "progress", progress: 50 });
+
+  loadingPromise = use.load().then((m) => {
+    model = m;
+    if (onProgress) onProgress({ status: "progress", progress: 100 });
+    return m;
+  });
+
+  return loadingPromise;
 }
 
-// Alle Terminals zusammenführen
-function getAllTerminals(bauteile) {
-  return Object.assign({}, ...bauteile.map(getTerminals));
+// Text → Float32Array Embedding (512-dimensional)
+async function embed(text) {
+  const tensor = await model.embed([text]);
+  const data = await tensor.data();
+  tensor.dispose();
+  return Array.from(data);
 }
-```
 
-### Klick-Logik
-```js
-function handleTerminalClick(terminalId) {
-  if (solved) return;
+// Kosinus-Ähnlichkeit
+function cosineSim(a, b) {
+  let dot = 0, na = 0, nb = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    na  += a[i] * a[i];
+    nb  += b[i] * b[i];
+  }
+  return dot / (Math.sqrt(na) * Math.sqrt(nb));
+}
 
-  if (!selected) {
-    setSelected(terminalId);
-    return;
+// Text in Sätze aufteilen
+function splitSentences(text) {
+  return text
+    .split(/[.!?]+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 8);
+}
+
+// Hauptfunktion — Vertrag identisch zu bisheriger classifyExplanation
+export async function classifyExplanation(rawText, concept) {
+  if (!model) throw new Error("Classifier nicht geladen — loadClassifier() zuerst aufrufen");
+
+  const sentences = splitSentences(rawText);
+  if (sentences.length === 0) {
+    return { covered: [], misconceptions: [], confidence: 0 };
   }
 
-  if (selected === terminalId) {
-    setSelected(null);
-    return;
+  // Satz-Embeddings (batch für Effizienz)
+  const sentenceTensor = await model.embed(sentences);
+  const sentenceData = await sentenceTensor.data();
+  sentenceTensor.dispose();
+
+  const dim = 512;
+  const sentenceVecs = sentences.map((_, i) =>
+    Array.from(sentenceData.slice(i * dim, (i + 1) * dim))
+  );
+
+  // KP-Embeddings (für Kernpunkte + MC-Kontrast)
+  const kpVecs = await Promise.all(concept.keyPoints.map((kp) => embed(kp.canonical)));
+
+  // --- Kernpunkte ---
+  const covered = [];
+  for (let ki = 0; ki < concept.keyPoints.length; ki++) {
+    const maxSim = Math.max(...sentenceVecs.map((sv) => cosineSim(sv, kpVecs[ki])));
+    if (maxSim >= KP_THRESHOLD) covered.push(concept.keyPoints[ki].id);
   }
 
-  // Gleiche Komponente? Nicht erlaubt.
-  const sameComponent = selected.split(".")[0] === terminalId.split(".")[0];
-  if (sameComponent) { setSelected(null); return; }
+  // --- Fehlvorstellungen (kontrastiv) ---
+  const misconceptions = [];
+  for (const mc of concept.misconceptions) {
+    const mcVec = await embed(mc.beschreibung);
+    let triggered = false;
 
-  // Bereits verbunden?
-  const alreadyConnected = wires.some(
-    (w) => (w.von === selected && w.zu === terminalId) ||
-            (w.von === terminalId && w.zu === selected)
-  );
-  if (alreadyConnected) { setSelected(null); return; }
+    for (const sv of sentenceVecs) {
+      const simToMC     = cosineSim(sv, mcVec);
+      const maxSimToKPs = Math.max(...kpVecs.map((kv) => cosineSim(sv, kv)));
 
-  // Draht hinzufügen
-  const newWires = [...wires, { von: selected, zu: terminalId }];
-  setWires(newWires);
-  setSelected(null);
+      if (simToMC >= MC_MIN && simToMC > maxSimToKPs + MC_CONTRAST) {
+        triggered = true;
+        break;
+      }
+    }
 
-  // Prüfen ob gelöst
-  checkSolution(newWires);
+    if (triggered) misconceptions.push(mc.id);
+  }
+
+  return { covered, misconceptions, confidence: 0.85 };
 }
-
-function checkSolution(currentWires) {
-  const allCorrect = config.loesung.every((req) =>
-    currentWires.some(
-      (w) => (w.von === req.von && w.zu === req.zu) ||
-              (w.von === req.zu  && w.zu === req.von)
-    )
-  );
-  if (allCorrect) setSolved(true);
-}
-```
-
-### Draht-Rendering (L-förmiges Routing)
-```js
-function wirePath(t1, t2) {
-  const midX = (t1.x + t2.x) / 2;
-  // Horizontal bis Mitte, dann vertikal, dann horizontal
-  return `M ${t1.x} ${t1.y} L ${midX} ${t1.y} L ${midX} ${t2.y} L ${t2.x} ${t2.y}`;
-}
-```
-
-### Bauteil-Rendering (SVG-Funktionen)
-
-**Batterie:**
-```js
-function BatterieSymbol({ cx, cy, label }) {
-  return (
-    <g>
-      <line x1={cx} y1={cy-35} x2={cx} y2={cy-10} stroke="var(--c-teal)" strokeWidth="2"/>
-      <line x1={cx-15} y1={cy-10} x2={cx+15} y2={cy-10} stroke="var(--c-teal)" strokeWidth="3" strokeLinecap="round"/>
-      <line x1={cx-9}  y1={cy}    x2={cx+9}  y2={cy}    stroke="var(--c-teal)" strokeWidth="1.5" strokeLinecap="round"/>
-      <line x1={cx} y1={cy} x2={cx} y2={cy+35} stroke="var(--c-teal)" strokeWidth="2"/>
-      <text x={cx+20} y={cy-8}  fill="var(--c-ember)" fontFamily="var(--font-mono)" fontSize="11">+</text>
-      <text x={cx+20} y={cy+5}  fill="var(--c-dim)"   fontFamily="var(--font-mono)" fontSize="11">−</text>
-      <text x={cx}    y={cy+55} fill="var(--c-teal)"  fontFamily="var(--font-mono)" fontSize="10" textAnchor="middle">{label}</text>
-    </g>
-  );
-}
-```
-
-**Widerstand:**
-```js
-function WiderstandSymbol({ cx, cy, label }) {
-  return (
-    <g>
-      <line x1={cx-40} y1={cy} x2={cx-20} y2={cy} stroke="var(--c-teal)" strokeWidth="2"/>
-      <rect x={cx-20} y={cy-12} width="40" height="24" rx="3"
-        fill="var(--c-bg)" stroke="var(--c-teal)" strokeWidth="2"/>
-      <line x1={cx+20} y1={cy} x2={cx+40} y2={cy} stroke="var(--c-teal)" strokeWidth="2"/>
-      <text x={cx} y={cy-18} fill="var(--c-ink)" fontFamily="var(--font-mono)" fontSize="10" textAnchor="middle">{label}</text>
-    </g>
-  );
-}
-```
-
-**LED:**
-```js
-function LEDSymbol({ cx, cy, label }) {
-  return (
-    <g>
-      <line x1={cx-25} y1={cy} x2={cx-15} y2={cy} stroke="var(--c-teal)" strokeWidth="2"/>
-      <polygon points={`${cx-15},${cy-13} ${cx-15},${cy+13} ${cx+8},${cy}`}
-        fill="rgba(255,162,77,0.15)" stroke="var(--c-ember)" strokeWidth="2" strokeLinejoin="round"/>
-      <line x1={cx+8} y1={cy-13} x2={cx+8} y2={cy+13} stroke="var(--c-ember)" strokeWidth="2.5" strokeLinecap="round"/>
-      <line x1={cx+8} y1={cy} x2={cx+25} y2={cy} stroke="var(--c-teal)" strokeWidth="2"/>
-      {/* Lichtpfeile */}
-      <line x1={cx+14} y1={cy-8}  x2={cx+22} y2={cy-18} stroke="var(--c-ember)" strokeWidth="1.5" strokeLinecap="round"/>
-      <line x1={cx+19} y1={cy-4}  x2={cx+28} y2={cy-14} stroke="var(--c-ember)" strokeWidth="1.5" strokeLinecap="round"/>
-      <text x={cx} y={cy+28} fill="var(--c-ember)" fontFamily="var(--font-mono)" fontSize="10" textAnchor="middle">{label}</text>
-    </g>
-  );
-}
-```
-
-### Terminal-Dots
-Klemmen als Kreise rendern:
-```jsx
-{Object.entries(allTerminals).map(([id, pos]) => {
-  const isSelected = selected === id;
-  const isConnected = wires.some(w => w.von === id || w.zu === id);
-  return (
-    <circle
-      key={id}
-      cx={pos.x} cy={pos.y} r={isSelected ? 9 : 6}
-      fill={isSelected ? "var(--c-teal)" : isConnected ? "var(--c-ember)" : "var(--c-bg2)"}
-      stroke={isSelected ? "var(--c-teal)" : "var(--c-edge)"}
-      strokeWidth="2"
-      style={{ cursor: solved ? "default" : "pointer" }}
-      onClick={() => handleTerminalClick(id)}
-    />
-  );
-})}
-```
-
-### Gelöst-State
-```jsx
-{solved && (
-  <motion.div {...rise} style={{ textAlign: "center", marginTop: 16 }}>
-    <p style={{ color: "var(--c-teal)", fontFamily: "var(--font-mono)", fontSize: 13, marginBottom: 12 }}>
-      ✓ Schaltung korrekt — Strom kann fließen
-    </p>
-    <Button variant="go" onClick={onSolved}>Weiter</Button>
-  </motion.div>
-)}
-```
-
-### Reset-Button
-```jsx
-{!solved && wires.length > 0 && (
-  <button
-    onClick={() => { setWires([]); setSelected(null); }}
-    style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--c-dim)",
-      background: "none", border: "none", cursor: "pointer", marginTop: 8 }}
-  >
-    Zurücksetzen
-  </button>
-)}
 ```
 
 ---
 
-## Task 3 — SchaltungScreen: CircuitBuilder einbinden
+## Task 4 — Verifikation
 
-In `SchaltungScreen.jsx`:
-```jsx
-import CircuitBuilder from "./CircuitBuilder.jsx";
+### Node-Test (wie bisher)
+Verifiziere mit den Demo-Texten aus dem letzten Task.
+Falls Schwellwerte nachkalibriert werden müssen: in 0.02er-Schritten.
+Ziel: stark → 4 KPs, 0 MCs · schwach → <4 KPs, mc1 erkannt.
 
-// Im Render, nach den bestehenden Checks:
-if (data.schaltplan?.typ === "interaktiv") {
-  return (
-    <div className="grid-bg" ...>
-      <motion.div {...rise} style={{ width: "100%", maxWidth: 560 }}>
-        {/* Step indicator */}
-        ...
-        <Panel>
-          <p style={{ ...eyebrow }}>SCHALTUNG</p>
-          <p style={{ fontSize: 15, marginBottom: 4 }}>{data.titel}</p>
-          <p style={{ fontSize: 13, color: "var(--c-dim)", marginBottom: 16 }}>{data.schaltplan.hinweis}</p>
-          <CircuitBuilder config={data.schaltplan} onSolved={onComplete} />
-        </Panel>
-        {/* frage/antwort Toggle darunter */}
-      </motion.div>
-    </div>
-  );
-}
+### Browser-Test in echtem Chrome
+```bash
+npm run build && npm run preview
 ```
+- [ ] Modell lädt durch (kein Hang)
+- [ ] Button wird nach Laden aktiv
+- [ ] Ein Satz → sinnvolles Ergebnis
 
 ---
 
@@ -294,53 +162,61 @@ if (data.schaltplan?.typ === "interaktiv") {
 
 - [ ] `npm run lint` → 0 Errors
 - [ ] `npm run build` → 0 Errors
-- [ ] tf-01-uri Schaltung: 3 Klemmen verbindbar, bei korrekter Schaltung → "Weiter"
-- [ ] Falsche Verbindung (gleiche Komponente): wird ignoriert
-- [ ] Reset-Button funktioniert
-- [ ] Bestehende modi (svg-inline, beschreibung-only) weiter funktionsfähig
-- [ ] Kein hardcoded Hex
+- [ ] Node-Verifikation: Demo-Texte korrekt klassifiziert
+- [ ] Browser: Modell initialisiert ohne Hang
+- [ ] `@xenova/transformers` nicht mehr in package.json
 
 ## Wenn fertig
-Schreibe: `## STATUS: CIRCUITBUILDER COMPLETE`
-und liste auf was gebaut wurde. Warte auf Nicos Review.
+Schreibe: `## STATUS: TENSORFLOW COMPLETE`
+Dokumentiere: Modell-Ladezeit im Browser + Similarity-Werte der Demo-Texte.
+Warte auf Nicos Review.
 
 ---
 
-## STATUS: CIRCUITBUILDER COMPLETE
+## STATUS: TENSORFLOW COMPLETE — Browser-Hänger gelöst ✅
 
-Erledigt am 2026-06-14:
+Erledigt am 2026-06-14. **Der ONNX/SharedArrayBuffer-Hänger ist weg** — das Modell
+initialisiert jetzt im Browser.
 
-**Task 1 — `schaltung.js` (tf-01-uri) auf `typ: "interaktiv"` umgestellt.**
-- Nur der `schaltplan`-Block ersetzt (canvas 520×260, 3 Bauteile bat/r1/led1, loesung mit
-  3 Verbindungen, hinweis). `beschreibung`, `frage`, `antwort`, `aufgebautMit` unverändert behalten.
-- **Hinweis:** Dein bisheriger statischer `svg-inline`-Schaltplan (das schöne IEC/DIN-SVG) wurde
-  dabei ersetzt — so vom Task vorgegeben. Er steckt noch in der Git-Historie, falls du ihn
-  zurück willst.
+### Tasks
+- ✅ Task 1: `@xenova/transformers` deinstalliert, `@tensorflow/tfjs` +
+  `@tensorflow-models/universal-sentence-encoder` installiert. xenova nicht mehr in package.json.
+- ✅ Task 2: `optimizeDeps`-Block aus `vite.config.js` entfernt.
+- ✅ Task 3: `classifier.js` auf TF.js USE umgeschrieben (Vertrag identisch).
+  **Abweichung (wie Vorphasen, bewusst):** tfjs+USE per dynamischem `import()` in loadClassifier
+  statt statisch — sonst landet ~1,9 MB im Haupt-Bundle. Jetzt eigener Lazy-Chunk (1,9 MB),
+  Haupt-Bundle 315 KB. Nebeneffekt: kein ungenutzter `import * as tf` (Lint sauber).
 
-**Task 2 — `CircuitBuilder.jsx` gebaut.**
-- `getTerminals`/`getAllTerminals` (Klemmen fix pro Typ im Code), `wirePath` (L-Routing),
-  SVG-Symbole Batterie/Widerstand/LED, Klemmen-Dots (klickbar), Klick-Logik
-  (`handleTerminalClick` + `checkSolution`), Gelöst-State + Reset-Button.
-- `wrongFlash` aus der Scaffold-Vorlage **weggelassen** — wurde im Spec-Code nie gesetzt und
-  ist nicht Teil der DoD; ein deklarierter, ungenutzter State hätte Lint-Warnings erzeugt.
-- LED-Polygon-Füllung: statt hardcodiertem `rgba(255,162,77,0.15)` jetzt
-  `color-mix(in srgb, var(--c-ember) 15%, transparent)` (DoD: kein Hex; kein neues Token nötig).
+### Kalibrierung (Node-Sweep, echte classifier.js-Funktionen)
+USE ist **englisch** trainiert und bettet deutschen Text uniform hoch ein (~0.83–0.93),
+daher deutlich höhere Schwellwerte als beim multilingualen Modell:
+```
+KP_THRESHOLD = 0.86   MC_MIN = 0.70   MC_CONTRAST = 0.045
+```
+Similarity-Werte der Demos (maxSim Satz↔Referenz):
+```
+strong  KP: kp1=0.932 kp2=0.891 kp3=0.893 kp4=0.894   (alle ≥0.86 → 4/4)
+        MC: mc1 Δ=−0.004  mc2 Δ=−0.011  mc3 Δ=0.038 (<0.045)   → 0 MC
+weak    KP: kp1=0.829 kp2=0.849 kp3=0.857 kp4=0.870   (nur kp4 ≥0.86 → 1/4)
+        MC: mc1 Δ=0.064 ✓  mc2 Δ=0.051 ✓  mc3 Δ=0.013 (<0.045)  → [mc1,mc2]
+```
+Ergebnis (echte Funktionen): **strong → 4/4 KP, 0 MC** · **weak → 1/4 KP, [mc1,mc2]**
+(mc1 erkannt; mc2 korrekt — der Text sagt wörtlich „Spannung und Strom sind dasselbe").
 
-**Task 3 — `SchaltungScreen.jsx`: CircuitBuilder eingebunden.**
-- Früher Branch `if (data.schaltplan?.typ === "interaktiv")` → rendert Builder + Hinweis +
-  Frage/Lösung-Toggle. Frage/Antwort-Toggle in lokale `FrageAntwort`-Komponente ausgelagert
-  (im interaktiv-Branch genutzt).
-- Bestehende Pfade (`svg-inline`, `beschreibung-only`, Lade-/Standard-Render) **unverändert** —
-  der neue Branch ist ein Early-Return davor.
+### Browser-Test (Prod-Build, `npm run preview`)
+- ✅ Modell lädt durch, **kein Hang**. „Prüfen" wird nach **~4 s** aktiv.
+- ✅ Erste Inferenz dauert ~15–20 s (einmaliger WebGL-Shader-Warmup), danach schnell.
+- ✅ Starker Text → „Sitzt — alle Kernpunkte getroffen" + „Weiter zur Schaltung".
+- ✅ Schwacher Text → „1 von 4 Kernpunkten · 2 Stolpersteine", Fehlvorstellung mc1 erkannt
+  und angezeigt, „Erklärung verbessern". Browser-Ergebnis = Node-Ergebnis.
+- ✅ Keine Konsolenfehler. `npm run lint` 0/0 · `npm run build` 0 Errors.
+- Hinweis: getestet im Preview-Sandbox-Browser (der vorher mit ONNX hing) — TF.js läuft dort
+  jetzt durch. In deinem echten Chrome/Edge sollte es genauso oder schneller sein.
 
-**Verifikation (Lint + Build + Laufzeit, DOM-verifiziert):**
-- ✅ `npm run lint` 0/0 · ✅ `npm run build` 0 Errors.
-- ✅ tf-01-uri Schaltung (Schritt 4): Builder rendert (6 Klemmen, Hinweis).
-- ✅ Gleiche-Komponente-Klick (bat.plus + bat.minus) → ignoriert (0 Drähte).
-- ✅ Korrekte Verbindung → Draht erscheint · Reset-Button leert Drähte.
-- ✅ Alle 3 korrekten Verbindungen → „✓ Schaltung korrekt — Strom kann fließen" + „Weiter" →
-  führt zu Schritt 5. „Lösung anzeigen" zeigt die Musterlösung.
-- ✅ Keine Konsolenfehler. Kein hardcoded Hex in CircuitBuilder.
-- Hinweis zu „bestehende modi": `svg-inline`/`beschreibung-only`-Code ist unangetastet (nur
-  Early-Return davor eingefügt) und war in Phase 4 bereits verifiziert — daher nicht erneut
-  durchgeklickt (kein aktiver Themenbereich nutzt diese modi mehr).
+### Caveats für Nico
+- **Englisches Modell auf Deutsch:** Embeddings sind uniform hoch, Trennband schmal
+  (KP-Lücke strong↔weak nur ~0.02). An 2 Demos kalibriert — für beliebige Azubi-Eingaben
+  nicht robust. Für echten Einsatz: mehr Beispieltexte zum Kalibrieren, oder multilinguales
+  USE (`use.loadQnA` ist es nicht; das mehrsprachige USE müsste man von separater TFHub-URL laden).
+- **Erst-Inferenz-Warmup ~15–20 s:** evtl. ein „einen Moment…"-Hinweis beim ersten Prüfen sinnvoll
+  (würde SelfExplanationScreen berühren → dein GO).
