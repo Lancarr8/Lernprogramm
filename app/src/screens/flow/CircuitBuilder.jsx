@@ -31,10 +31,13 @@ function getAllTerminals(bauteile) {
   return Object.assign({}, ...bauteile.map(getTerminals));
 }
 
-// L-förmiges Routing: horizontal bis Mitte, vertikal, horizontal.
-function wirePath(t1, t2) {
-  const midX = (t1.x + t2.x) / 2;
-  return `M ${t1.x} ${t1.y} L ${midX} ${t1.y} L ${midX} ${t2.y} L ${t2.x} ${t2.y}`;
+// Rail-Routing: jeder Draht läuft vertikal auf eine gemeinsame Schiene (oben oder
+// unten) und dann horizontal entlang dieser Schiene — saubere rechteckige Serien-
+// Schleife statt berechneter Mittelpunkte. Drähte, die in die untere Hälfte reichen
+// (z. B. Rückleitung zum Minus-Pol), nehmen die Bottom-Rail, sonst die Top-Rail.
+function railWirePath(t1, t2, topRail, bottomRail, midY) {
+  const rail = Math.max(t1.y, t2.y) > midY ? bottomRail : topRail;
+  return `M ${t1.x} ${t1.y} L ${t1.x} ${rail} L ${t2.x} ${rail} L ${t2.x} ${t2.y}`;
 }
 
 function BatterieSymbol({ cx, cy, label }) {
@@ -177,6 +180,14 @@ export default function CircuitBuilder({ config, onSolved }) {
   const { canvas, bauteile, loesung } = config;
   const allTerminals = getAllTerminals(bauteile);
 
+  // Gemeinsame Routing-Schienen ober-/unterhalb aller Klemmen.
+  const terminalYs = Object.values(allTerminals).map((t) => t.y);
+  const minY = Math.min(...terminalYs);
+  const maxY = Math.max(...terminalYs);
+  const topRail = minY - 20;
+  const bottomRail = maxY + 20;
+  const midY = (minY + maxY) / 2;
+
   function checkSolution(currentWires) {
     const allCorrect = loesung.every((req) =>
       currentWires.some(
@@ -253,7 +264,7 @@ export default function CircuitBuilder({ config, onSolved }) {
           return (
             <path
               key={i}
-              d={wirePath(t1, t2)}
+              d={railWirePath(t1, t2, topRail, bottomRail, midY)}
               fill="none"
               stroke="var(--c-ember)"
               strokeWidth="2.5"

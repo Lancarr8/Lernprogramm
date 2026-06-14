@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { markScreenDone } from "../../data/progress.js";
 import * as allContent from "../../content/index.js";
 import { fade } from "../../theme/motion.js";
+import Button from "../../components/Button.jsx";
 import LernseiteScreen from "./LernseiteScreen.jsx";
 import AufgabenScreen from "./AufgabenScreen.jsx";
 import SelfExplanationScreen from "./SelfExplanationScreen.jsx";
@@ -76,16 +77,26 @@ export default function FlowController({ navigate, context }) {
   }
 
   return (
-    <motion.div key={currentIndex} {...fade}>
-      <ScreenComponent
-        data={stepData}
-        onComplete={handleComplete}
-        navigate={navigate}
-        currentStep={currentIndex + 1}
-        totalSteps={steps.length}
-        lernfeldId={lernfeldId}
-        themenfeldId={themenfeldId}
-      />
-    </motion.div>
+    <div style={{ position: "relative", minHeight: "100%" }}>
+      {/* Zurück zum Lernfeld — über jedem Flow-Screen */}
+      <Button
+        variant="ghost"
+        onClick={() => navigate("lernfeld", { lernfeldId })}
+        style={{ position: "absolute", top: 12, left: 12, zIndex: 20 }}
+      >
+        ← Zurück
+      </Button>
+      <motion.div key={currentIndex} {...fade}>
+        <ScreenComponent
+          data={stepData}
+          onComplete={handleComplete}
+          navigate={navigate}
+          currentStep={currentIndex + 1}
+          totalSteps={steps.length}
+          lernfeldId={lernfeldId}
+          themenfeldId={themenfeldId}
+        />
+      </motion.div>
+    </div>
   );
 }
