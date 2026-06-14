@@ -20,6 +20,8 @@ export default {
     "Qualitätssicherung",
   ],
   themenfelder: [
-    // TODO: Nico — Themenbereiche aus den Inhalten ableiten
+    { id: "tf-01-gehaeuse", titel: "Gehäuse und mechanische Bauteile", data: () => import("./tf-01-gehaeuse/index.js") },
+    { id: "tf-02-sensoren", titel: "Sensoren, Aktoren und AD/DA-Umsetzer", data: () => import("./tf-02-sensoren/index.js") },
+    { id: "tf-03-qualitaet", titel: "Qualitätssicherung und Prüfung", data: () => import("./tf-03-qualitaet/index.js") },
   ],
 };

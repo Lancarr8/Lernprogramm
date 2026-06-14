@@ -17,6 +17,8 @@ export default {
     "Wirtschaftlichkeit",
   ],
   themenfelder: [
-    // TODO: Nico — Themenbereiche aus den Inhalten ableiten
+    { id: "tf-01-konzepte", titel: "Instandhaltungskonzepte und -management", data: () => import("./tf-01-konzepte/index.js") },
+    { id: "tf-02-analyse", titel: "Fehler- und Verschleißanalyse", data: () => import("./tf-02-analyse/index.js") },
+    { id: "tf-03-wirtschaftlichkeit", titel: "Wirtschaftlichkeit und Qualitätsmanagement", data: () => import("./tf-03-wirtschaftlichkeit/index.js") },
   ],
 };

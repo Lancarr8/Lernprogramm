@@ -14,10 +14,12 @@ export default {
     "Programmieralgorithmen, Entwurfsdarstellungen",
     "Prüf-, Mess- und Analyseverfahren",
     "Signal- und Leistungsanpassung",
-    "Zusatzprüfungen, BURN-IN, Klimasimulation",
+    "Zustazprüfungen, BURN-IN, Klimasimulation",
     "Prüfverfahren als Methoden des Qualitätsmanagements",
   ],
   themenfelder: [
-    // TODO: Nico — Themenbereiche aus den Inhalten ableiten
+    { id: "tf-01-pruefsysteme", titel: "Aufbau und Struktur von Prüfsystemen", data: () => import("./tf-01-pruefsysteme/index.js") },
+    { id: "tf-02-pruefprogramme", titel: "Prüfprogramme erstellen und anpassen", data: () => import("./tf-02-pruefprogramme/index.js") },
+    { id: "tf-03-qualitaet", titel: "Qualitätssicherung durch Prüfverfahren", data: () => import("./tf-03-qualitaet/index.js") },
   ],
 };

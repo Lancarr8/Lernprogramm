@@ -17,6 +17,8 @@ export default {
     "Projektpräsentation",
   ],
   themenfelder: [
-    // TODO: Nico — Themenbereiche aus den Inhalten ableiten
+    { id: "tf-01-projektmanagement", titel: "Projektmanagement und Planung", data: () => import("./tf-01-projektmanagement/index.js") },
+    { id: "tf-02-realisierung", titel: "Geräte und Systeme realisieren", data: () => import("./tf-02-realisierung/index.js") },
+    { id: "tf-03-praesentation", titel: "Dokumentation und Projektpräsentation", data: () => import("./tf-03-praesentation/index.js") },
   ],
 };

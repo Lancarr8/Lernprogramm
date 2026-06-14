@@ -20,6 +20,8 @@ export default {
     "Prozessoptimierung",
   ],
   themenfelder: [
-    // TODO: Nico — Themenbereiche aus den Inhalten ableiten
+    { id: "tf-01-steuerungen", titel: "Ablauf- und Verknüpfungssteuerungen", data: () => import("./tf-01-steuerungen/index.js") },
+    { id: "tf-02-sicherheit", titel: "Anlagensicherheit und Schutzmaßnahmen", data: () => import("./tf-02-sicherheit/index.js") },
+    { id: "tf-03-optimierung", titel: "Prozessoptimierung und Qualitätsmanagement", data: () => import("./tf-03-optimierung/index.js") },
   ],
 };

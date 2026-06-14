@@ -19,6 +19,9 @@ export default {
     "Kostenberechnung, Angebotserstellung",
   ],
   themenfelder: [
-    // TODO: Nico — Themenbereiche aus den Inhalten ableiten
+    { id: "tf-01-installation", titel: "Elektrische Installation planen", data: () => import("./tf-01-installation/index.js") },
+    { id: "tf-02-leitungen", titel: "Leitungsdimensionierung", data: () => import("./tf-02-leitungen/index.js") },
+    { id: "tf-03-schutz", titel: "Sicherheitsbestimmungen und Schutzmaßnahmen", data: () => import("./tf-03-schutz/index.js") },
+    { id: "tf-04-kosten", titel: "Kostenberechnung und Angebotserstellung", data: () => import("./tf-04-kosten/index.js") },
   ],
 };

@@ -19,6 +19,8 @@ export default {
     "Präsentationstechniken und -methoden",
   ],
   themenfelder: [
-    // TODO: Nico — Themenbereiche aus den Inhalten ableiten
+    { id: "tf-01-hardware", titel: "Hardware und Betriebssysteme", data: () => import("./tf-01-hardware/index.js") },
+    { id: "tf-02-netzwerke", titel: "Netzwerke und Datenübertragung", data: () => import("./tf-02-netzwerke/index.js") },
+    { id: "tf-03-datenschutz", titel: "Datenschutz und Datensicherheit", data: () => import("./tf-03-datenschutz/index.js") },
   ],
 };

@@ -20,6 +20,8 @@ export default {
     "Komponenten einer integrierten Entwicklungsumgebung",
   ],
   themenfelder: [
-    // TODO: Nico — Themenbereiche aus den Inhalten ableiten
+    { id: "tf-01-mikrocontroller", titel: "Mikrocontroller und Signalprozessoren", data: () => import("./tf-01-mikrocontroller/index.js") },
+    { id: "tf-02-schnittstellen", titel: "Schnittstellen und Bussysteme", data: () => import("./tf-02-schnittstellen/index.js") },
+    { id: "tf-03-programmierung", titel: "Programmierung und Entwicklungsumgebung", data: () => import("./tf-03-programmierung/index.js") },
   ],
 };

@@ -16,6 +16,8 @@ export default {
     "Technische Dokumentationen",
   ],
   themenfelder: [
-    // TODO: Nico — Themenbereiche aus den Inhalten ableiten
+    { id: "tf-01-eva", titel: "EVA-Prinzip, Sensoren und Aktoren", data: () => import("./tf-01-eva/index.js") },
+    { id: "tf-02-logik", titel: "Logische Grundverknüpfungen und Speicherfunktionen", data: () => import("./tf-02-logik/index.js") },
+    { id: "tf-03-sps", titel: "Speicherprogrammierte Steuerungen", data: () => import("./tf-03-sps/index.js") },
   ],
 };

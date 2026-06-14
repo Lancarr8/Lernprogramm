@@ -1,5 +1,4 @@
-// LF 5 — Elektroenergieversorgung für Geräte und Systeme realisieren
-//         und deren Sicherheit gewährleisten
+// LF 5 — Elektroenergieversorgung für Geräte und Systeme realisieren und deren Sicherheit gewährleisten
 // 2. Ausbildungsjahr · 80 Stunden
 
 export default {
@@ -20,6 +19,8 @@ export default {
     "Produktinformationen",
   ],
   themenfelder: [
-    // TODO: Nico — Themenbereiche aus den Inhalten ableiten
+    { id: "tf-01-netzteile", titel: "Lineare Netzteile und Schaltnetzteile", data: () => import("./tf-01-netzteile/index.js") },
+    { id: "tf-02-schutz", titel: "Schutzmaßnahmen und Netzformen", data: () => import("./tf-02-schutz/index.js") },
+    { id: "tf-03-emv", titel: "EMV und technische Anschlussbedingungen", data: () => import("./tf-03-emv/index.js") },
   ],
 };
