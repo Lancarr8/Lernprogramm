@@ -153,3 +153,21 @@ Erledigt am 2026-06-17.
 - `data/progress.js` unverändert (Persistenz-Layer). Flow-Screens/Content/Doku unangetastet.
 
 **→ REVIEW-GATE:** Warte auf Nicos Abnahme von Phase A, bevor Phase B (Dashboard/Lernfeld token-nativ) startet.
+
+---
+
+## STATUS: PHASE B COMPLETE (Commit B)
+
+Erledigt am 2026-06-17 (nach GO für Phase B).
+- **DashboardScreen.jsx**: Font/Spacing/LineHeight → Tokens; **Weitermachen-Label → `<Eyebrow>`**;
+  „LERNPROGRAMM"/„v0.1" nur fontSize/color tokenisiert (kein Eyebrow); **Glyph „✓" → `<IconCheck size={13}/>`**
+  inline (teal) + Text „Abgeschlossen". Animiertes Spalten-`motion.div` bleibt (gaps in-place).
+- **LernfeldScreen.jsx**: „IHK-Lernfeld · Nr." → `<Eyebrow>`; h1 26→`--fs-display`, ls→`--ls-tight`;
+  Card-Spacings + h2 16→`--fs-h3` → Tokens; StatusIcon (Icons.jsx) unverändert.
+- Lint **0/0**, Build 0 Errors, keine Konsolenfehler.
+- **Render verifiziert (computed):** Dashboard — Weitermachen-Eyebrow 11px/uppercase, LERNPROGRAMM 12px,
+  „Abgeschlossen" mit SVG-Icon (Glyph weg), Card-h2 18px(`--fs-h2`). Lernfeld — Eyebrow 11px/uppercase/ls 2.2px,
+  h1 28px(display)/ls −0.28px(`--ls-tight`), tf-h2 16px(`--fs-h3`), 6 Status-SVGs, kein Emoji-Glyph.
+- Beide Screens rendern ohne Bruch; Flow-Screens/Content/Doku unangetastet.
+
+**Migration „Dashboard/Lernfeld token-nativ + Progress-Reaktivität" abgeschlossen (Commit A + B).**

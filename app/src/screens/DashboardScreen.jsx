@@ -2,6 +2,8 @@ import { motion } from "framer-motion";
 import Panel from "../components/Panel.jsx";
 import Button from "../components/Button.jsx";
 import ProgressBar from "../components/ProgressBar.jsx";
+import Eyebrow from "../components/Eyebrow.jsx";
+import { IconCheck } from "../components/Icons.jsx";
 import { rise } from "../theme/motion.js";
 import * as allContent from "../content/index.js";
 import { useProgress } from "../data/ProgressContext.jsx";
@@ -31,7 +33,10 @@ export default function DashboardScreen({ navigate }) {
   const last = resolveLastVisited(progress.lastVisited, lernfelder);
 
   return (
-    <div className="grid-bg" style={{ minHeight: "100%", padding: "22px 16px 40px" }}>
+    <div
+      className="grid-bg"
+      style={{ minHeight: "100%", padding: "var(--space-5) var(--space-4) var(--space-7)" }}
+    >
       <motion.div
         {...rise}
         style={{
@@ -40,18 +45,18 @@ export default function DashboardScreen({ navigate }) {
           margin: "0 auto",
           display: "flex",
           flexDirection: "column",
-          gap: 14,
+          gap: "var(--space-4)",
         }}
       >
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span
             className="mono"
-            style={{ fontSize: 12, color: "var(--c-dim)", letterSpacing: ".04em" }}
+            style={{ fontSize: "var(--fs-label)", color: "var(--c-dim)", letterSpacing: ".04em" }}
           >
             LERNPROGRAMM
           </span>
-          <span className="mono" style={{ fontSize: 12, color: "var(--c-teal)" }}>
+          <span className="mono" style={{ fontSize: "var(--fs-label)", color: "var(--c-teal)" }}>
             v0.1
           </span>
         </div>
@@ -59,18 +64,8 @@ export default function DashboardScreen({ navigate }) {
         {/* Weitermachen-Banner */}
         {last && (
           <Panel tone="pan2">
-            <span
-              className="mono"
-              style={{
-                fontSize: 10.5,
-                letterSpacing: ".18em",
-                textTransform: "uppercase",
-                color: "var(--c-teal)",
-              }}
-            >
-              Weitermachen
-            </span>
-            <p style={{ margin: "8px 0 14px", fontSize: 15, color: "var(--c-ink)" }}>
+            <Eyebrow>Weitermachen</Eyebrow>
+            <p style={{ margin: "var(--space-2) 0 var(--space-4)", fontSize: "var(--fs-body)", color: "var(--c-ink)" }}>
               {last.lernfeld.titel} · {last.themenfeld.titel}
             </p>
             <Button variant="go" onClick={() => navigate("flow", progress.lastVisited)}>
@@ -94,25 +89,38 @@ export default function DashboardScreen({ navigate }) {
                   display: "flex",
                   alignItems: "baseline",
                   justifyContent: "space-between",
-                  gap: 10,
+                  gap: "var(--space-3)",
                 }}
               >
-                <h2 style={{ margin: 0, fontSize: 18 }}>{lf.titel}</h2>
+                <h2 style={{ margin: 0, fontSize: "var(--fs-h2)" }}>{lf.titel}</h2>
                 <span
                   className="mono"
-                  style={{ fontSize: 11.5, color: "var(--c-dim)", whiteSpace: "nowrap" }}
+                  style={{ fontSize: "var(--fs-micro)", color: "var(--c-dim)", whiteSpace: "nowrap" }}
                 >
                   LF {lf.ihkNummer}
                 </span>
               </div>
 
-              <ProgressBar done={done} total={total} style={{ margin: "13px 0 9px" }} />
+              <ProgressBar done={done} total={total} style={{ margin: "var(--space-3) 0 var(--space-2)" }} />
 
               <span
                 className="mono"
-                style={{ fontSize: 11.5, color: fertig ? "var(--c-teal)" : "var(--c-dim)" }}
+                style={{
+                  fontSize: "var(--fs-micro)",
+                  color: fertig ? "var(--c-teal)" : "var(--c-dim)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "var(--space-1)",
+                }}
               >
-                {fertig ? "Abgeschlossen ✓" : `${done} von ${total} abgeschlossen`}
+                {fertig ? (
+                  <>
+                    <IconCheck size={13} />
+                    Abgeschlossen
+                  </>
+                ) : (
+                  `${done} von ${total} abgeschlossen`
+                )}
               </span>
             </Panel>
           );

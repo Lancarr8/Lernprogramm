@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import Panel from "../components/Panel.jsx";
 import Button from "../components/Button.jsx";
 import ProgressBar from "../components/ProgressBar.jsx";
+import Eyebrow from "../components/Eyebrow.jsx";
 import { rise } from "../theme/motion.js";
 import * as allContent from "../content/index.js";
 import { useProgress } from "../data/ProgressContext.jsx";
@@ -56,11 +57,11 @@ export default function LernfeldScreen({ navigate, context }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: 24,
+          padding: "var(--space-5)",
         }}
       >
         <div style={{ textAlign: "center" }}>
-          <p style={{ color: "var(--c-dim)", marginBottom: 14 }}>Lernfeld nicht gefunden.</p>
+          <p style={{ color: "var(--c-dim)", marginBottom: "var(--space-4)" }}>Lernfeld nicht gefunden.</p>
           <Button onClick={() => navigate("dashboard")}>← Zurück</Button>
         </div>
       </div>
@@ -68,7 +69,10 @@ export default function LernfeldScreen({ navigate, context }) {
   }
 
   return (
-    <div className="grid-bg" style={{ minHeight: "100%", padding: "22px 16px 40px" }}>
+    <div
+      className="grid-bg"
+      style={{ minHeight: "100%", padding: "var(--space-5) var(--space-4) var(--space-7)" }}
+    >
       <motion.div
         {...rise}
         style={{
@@ -77,7 +81,7 @@ export default function LernfeldScreen({ navigate, context }) {
           margin: "0 auto",
           display: "flex",
           flexDirection: "column",
-          gap: 14,
+          gap: "var(--space-4)",
         }}
       >
         <Button variant="ghost" onClick={() => navigate("dashboard")} style={{ alignSelf: "flex-start" }}>
@@ -85,18 +89,8 @@ export default function LernfeldScreen({ navigate, context }) {
         </Button>
 
         <div>
-          <span
-            className="mono"
-            style={{
-              fontSize: 10.5,
-              letterSpacing: ".2em",
-              textTransform: "uppercase",
-              color: "var(--c-teal)",
-            }}
-          >
-            IHK-Lernfeld · Nr. {lernfeld.ihkNummer}
-          </span>
-          <h1 style={{ margin: "8px 0 0", fontSize: 26, letterSpacing: "-.01em" }}>
+          <Eyebrow>IHK-Lernfeld · Nr. {lernfeld.ihkNummer}</Eyebrow>
+          <h1 style={{ margin: "var(--space-2) 0 0", fontSize: "var(--fs-display)", letterSpacing: "var(--ls-tight)" }}>
             {lernfeld.titel}
           </h1>
         </div>
@@ -127,7 +121,7 @@ export default function LernfeldScreen({ navigate, context }) {
                       })
               }
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
                 <span
                   aria-hidden="true"
                   style={{ color: status.color, width: 18, display: "inline-flex", justifyContent: "center" }}
@@ -135,8 +129,8 @@ export default function LernfeldScreen({ navigate, context }) {
                   <StatusIcon state={status.state} />
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <h2 style={{ margin: 0, fontSize: 16 }}>{tf.titel}</h2>
-                  <ProgressBar done={done} total={total} style={{ margin: "10px 0 0" }} />
+                  <h2 style={{ margin: 0, fontSize: "var(--fs-h3)" }}>{tf.titel}</h2>
+                  <ProgressBar done={done} total={total} style={{ margin: "var(--space-3) 0 0" }} />
                 </div>
                 {!locked && (
                   <Button
