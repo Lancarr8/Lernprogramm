@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Button from "../../components/Button.jsx";
 import { rise } from "../../theme/motion.js";
+import { IconCheck } from "../../components/Icons.jsx";
 
 // CircuitBuilder — interaktiver Schaltungsaufbau. Der User verbindet Klemmen
 // per Klick (zwei Klemmen antippen = Draht). Die App prüft gegen config.loesung.
@@ -296,16 +297,21 @@ export default function CircuitBuilder({ config, onSolved }) {
 
       {/* Gelöst-State */}
       {solved && (
-        <motion.div {...rise} style={{ textAlign: "center", marginTop: 16 }}>
+        <motion.div {...rise} style={{ textAlign: "center", marginTop: "var(--space-4)" }}>
           <p
             style={{
-              color: "var(--c-teal)",
+              color: "var(--c-ok)",
               fontFamily: "var(--font-mono)",
-              fontSize: 13,
-              marginBottom: 12,
+              fontSize: "var(--fs-sm)",
+              marginBottom: "var(--space-3)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "var(--space-2)",
             }}
           >
-            ✓ Schaltung korrekt — Strom kann fließen
+            <IconCheck size={15} />
+            Schaltung korrekt — Strom kann fließen
           </p>
           <Button variant="go" onClick={onSolved}>
             Weiter
@@ -322,12 +328,12 @@ export default function CircuitBuilder({ config, onSolved }) {
           }}
           style={{
             fontFamily: "var(--font-mono)",
-            fontSize: 11,
+            fontSize: "var(--fs-micro)",
             color: "var(--c-dim)",
             background: "none",
             border: "none",
             cursor: "pointer",
-            marginTop: 8,
+            marginTop: "var(--space-2)",
           }}
         >
           Zurücksetzen

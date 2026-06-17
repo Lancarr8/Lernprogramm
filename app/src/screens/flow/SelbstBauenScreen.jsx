@@ -2,29 +2,46 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Panel from "../../components/Panel.jsx";
 import Button from "../../components/Button.jsx";
+import SectionTag from "../../components/SectionTag.jsx";
 import { rise } from "../../theme/motion.js";
+import { IconTick, IconWarn } from "../../components/Icons.jsx";
 
 // SelbstBauenScreen — Aufbauanleitung / Praxisaufgabe.
 // Liest Content aus `data` (Schema siehe NEXT_STEP / selbst-bauen.js).
 
-function Shell({ currentStep, totalSteps, children }) {
+function Shell({ currentStep, totalSteps, kontext, children }) {
   return (
     <div
       className="grid-bg"
-      style={{ minHeight: "100%", display: "flex", justifyContent: "center", padding: "22px 16px 40px" }}
+      style={{
+        minHeight: "100%",
+        display: "flex",
+        justifyContent: "center",
+        padding: "var(--space-5) var(--space-4) var(--space-7)",
+      }}
     >
       <motion.div {...rise} style={{ width: "100%", maxWidth: 520 }}>
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
-            marginBottom: 14,
+            marginBottom: "var(--space-4)",
             fontFamily: "var(--font-mono)",
-            fontSize: 12,
+            fontSize: "var(--fs-label)",
           }}
         >
-          <span style={{ color: "var(--c-dim)" }}>LERNFELD · URI</span>
-          <span style={{ color: "var(--c-teal)" }}>
+          <span
+            style={{
+              color: "var(--c-dim)",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              maxWidth: "62%",
+            }}
+          >
+            LF {kontext?.lfNummer} · {kontext?.thema}
+          </span>
+          <span style={{ color: "var(--c-teal)", whiteSpace: "nowrap" }}>
             Schritt {currentStep} / {totalSteps}
           </span>
         </div>
@@ -33,14 +50,6 @@ function Shell({ currentStep, totalSteps, children }) {
     </div>
   );
 }
-
-const eyebrow = {
-  margin: "0 0 12px",
-  color: "var(--c-dim)",
-  fontFamily: "var(--font-mono)",
-  fontSize: 12,
-  letterSpacing: ".1em",
-};
 
 // Abhakbare Zeile (Material oder Schritt).
 function CheckRow({ checked, onToggle, children }) {
@@ -52,8 +61,8 @@ function CheckRow({ checked, onToggle, children }) {
         cursor: "pointer",
         display: "flex",
         alignItems: "flex-start",
-        gap: 10,
-        padding: "8px 0",
+        gap: "var(--space-3)",
+        padding: "var(--space-2) 0",
         width: "100%",
         boxSizing: "border-box",
       }}
@@ -72,20 +81,24 @@ function CheckRow({ checked, onToggle, children }) {
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: 12,
-          fontWeight: 700,
         }}
       >
-        {checked ? "✓" : ""}
+        {checked ? <IconTick size={13} /> : null}
       </span>
-      <span style={{ fontSize: 14.5, lineHeight: 1.5, color: checked ? "var(--c-dim)" : "var(--c-ink)" }}>
+      <span
+        style={{
+          fontSize: "var(--fs-body)",
+          lineHeight: "var(--lh-base)",
+          color: checked ? "var(--c-dim)" : "var(--c-ink)",
+        }}
+      >
         {children}
       </span>
     </button>
   );
 }
 
-export default function SelbstBauenScreen({ data, onComplete, currentStep, totalSteps }) {
+export default function SelbstBauenScreen({ data, onComplete, currentStep, totalSteps, kontext }) {
   const [matDone, setMatDone] = useState(() => new Set());
   const [stepDone, setStepDone] = useState(() => new Set());
 
@@ -103,9 +116,9 @@ export default function SelbstBauenScreen({ data, onComplete, currentStep, total
 
   if (!data) {
     return (
-      <Shell currentStep={currentStep} totalSteps={totalSteps}>
+      <Shell currentStep={currentStep} totalSteps={totalSteps} kontext={kontext}>
         <Panel>
-          <p style={{ margin: 0, fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--c-teal)" }}>
+          <p style={{ margin: 0, fontFamily: "var(--font-mono)", fontSize: "var(--fs-sm)", color: "var(--c-teal)" }}>
             Lade…
           </p>
         </Panel>
@@ -119,10 +132,17 @@ export default function SelbstBauenScreen({ data, onComplete, currentStep, total
   // Fallback: keine Schritte befüllt
   if (schritte.length === 0) {
     return (
-      <Shell currentStep={currentStep} totalSteps={totalSteps}>
+      <Shell currentStep={currentStep} totalSteps={totalSteps} kontext={kontext}>
         <Panel>
-          <p style={eyebrow}>SELBST BAUEN</p>
-          <p style={{ margin: "0 0 20px", fontSize: 15, lineHeight: 1.6, color: "var(--c-dim)" }}>
+          <SectionTag style={{ marginBottom: "var(--space-3)" }}>SELBST BAUEN</SectionTag>
+          <p
+            style={{
+              margin: "0 0 var(--space-5)",
+              fontSize: "var(--fs-body)",
+              lineHeight: "var(--lh-relaxed)",
+              color: "var(--c-dim)",
+            }}
+          >
             Inhalt folgt in Kürze.
           </p>
           <Button variant="go" onClick={onComplete}>
@@ -136,39 +156,39 @@ export default function SelbstBauenScreen({ data, onComplete, currentStep, total
   const alleAbgehakt = stepDone.size === schritte.length;
 
   return (
-    <Shell currentStep={currentStep} totalSteps={totalSteps}>
-      <motion.div {...rise} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        {data.titel && <h1 style={{ margin: 0, fontSize: 21 }}>{data.titel}</h1>}
+    <Shell currentStep={currentStep} totalSteps={totalSteps} kontext={kontext}>
+      <motion.div {...rise} style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+        {data.titel && <h1 style={{ margin: 0, fontSize: "var(--fs-h1)" }}>{data.titel}</h1>}
 
         {/* Sicherheitshinweis */}
         {data.sicherheit && (
           <div
             style={{
               display: "flex",
-              gap: 10,
+              gap: "var(--space-3)",
               alignItems: "flex-start",
               background: "var(--c-warn-soft)",
               border: "1px solid var(--c-warn-edge)",
               borderRadius: "var(--radius-md)",
-              padding: "12px 13px",
+              padding: "var(--space-3) var(--space-3)",
             }}
           >
-            <span aria-hidden="true" style={{ color: "var(--c-warn)", fontSize: 16, marginTop: 1 }}>
-              ⚠
+            <span aria-hidden="true" style={{ color: "var(--c-warn)", display: "inline-flex", marginTop: 1 }}>
+              <IconWarn size={17} />
             </span>
             <div>
               <div
                 style={{
-                  fontSize: 11,
+                  fontSize: "var(--fs-micro)",
                   letterSpacing: ".12em",
                   textTransform: "uppercase",
                   color: "var(--c-warn)",
-                  marginBottom: 3,
+                  marginBottom: "var(--space-1)",
                 }}
               >
                 Sicherheit
               </div>
-              <div style={{ fontSize: 14, lineHeight: 1.5 }}>{data.sicherheit}</div>
+              <div style={{ fontSize: "var(--fs-body)", lineHeight: "var(--lh-base)" }}>{data.sicherheit}</div>
             </div>
           </div>
         )}
@@ -176,7 +196,7 @@ export default function SelbstBauenScreen({ data, onComplete, currentStep, total
         {/* Materialliste */}
         {materialien.length > 0 && (
           <Panel>
-            <p style={eyebrow}>MATERIAL</p>
+            <SectionTag style={{ marginBottom: "var(--space-3)" }}>MATERIAL</SectionTag>
             {materialien.map((m, i) => (
               <CheckRow key={i} checked={matDone.has(i)} onToggle={() => toggleMat(i)}>
                 <b style={{ color: "var(--c-teal)", fontWeight: 500 }}>{m.menge}×</b> {m.bauteil}
@@ -187,10 +207,10 @@ export default function SelbstBauenScreen({ data, onComplete, currentStep, total
 
         {/* Schritte */}
         <Panel>
-          <p style={eyebrow}>AUFBAU</p>
+          <SectionTag style={{ marginBottom: "var(--space-3)" }}>AUFBAU</SectionTag>
           {schritte.map((s, i) => (
             <CheckRow key={i} checked={stepDone.has(i)} onToggle={() => toggleStep(i)}>
-              <b style={{ color: "var(--c-teal)", fontWeight: 500, marginRight: 6 }}>{i + 1}.</b>
+              <b style={{ color: "var(--c-teal)", fontWeight: 500, marginRight: "var(--space-2)" }}>{i + 1}.</b>
               {s}
             </CheckRow>
           ))}
@@ -198,7 +218,10 @@ export default function SelbstBauenScreen({ data, onComplete, currentStep, total
 
         {/* Abschluss */}
         {alleAbgehakt && data.abschluss && (
-          <motion.p {...rise} style={{ margin: 0, fontSize: 14.5, lineHeight: 1.5, color: "var(--c-teal)" }}>
+          <motion.p
+            {...rise}
+            style={{ margin: 0, fontSize: "var(--fs-body)", lineHeight: "var(--lh-base)", color: "var(--c-ok)" }}
+          >
             {data.abschluss}
           </motion.p>
         )}

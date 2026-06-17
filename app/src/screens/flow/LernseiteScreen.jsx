@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Panel from "../../components/Panel.jsx";
 import Button from "../../components/Button.jsx";
 import ProgressBar from "../../components/ProgressBar.jsx";
+import Eyebrow from "../../components/Eyebrow.jsx";
 import { rise, motion as motionTokens } from "../../theme/motion.js";
 
 // LernseiteScreen — Realwelt-Anker → Warum → interaktives Visual → Teaser.
@@ -12,8 +13,8 @@ import { rise, motion as motionTokens } from "../../theme/motion.js";
 const tagStyle = {
   display: "inline-flex",
   alignItems: "center",
-  gap: 6,
-  fontSize: 10.5,
+  gap: "var(--space-2)",
+  fontSize: "var(--fs-micro)",
   letterSpacing: ".16em",
   textTransform: "uppercase",
   color: "var(--c-dim)",
@@ -66,16 +67,16 @@ function PlaceholderShell({ titel, currentStep, totalSteps, onComplete }) {
   return (
     <div
       className="grid-bg"
-      style={{ minHeight: "100%", display: "flex", justifyContent: "center", padding: 24 }}
+      style={{ minHeight: "100%", display: "flex", justifyContent: "center", padding: "var(--space-5)" }}
     >
       <motion.div {...rise} style={{ width: "100%", maxWidth: 520 }}>
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
-            marginBottom: 14,
+            marginBottom: "var(--space-4)",
             fontFamily: "var(--font-mono)",
-            fontSize: 12,
+            fontSize: "var(--fs-label)",
           }}
         >
           <span style={{ color: "var(--c-dim)" }}>LERNSEITE</span>
@@ -84,10 +85,19 @@ function PlaceholderShell({ titel, currentStep, totalSteps, onComplete }) {
           </span>
         </div>
         <Panel>
-          <p style={{ margin: "0 0 6px", color: "var(--c-dim)", fontFamily: "var(--font-mono)", fontSize: 12 }}>
+          <p
+            style={{
+              margin: "0 0 var(--space-2)",
+              color: "var(--c-dim)",
+              fontFamily: "var(--font-mono)",
+              fontSize: "var(--fs-label)",
+            }}
+          >
             {titel.toUpperCase()}
           </p>
-          <p style={{ margin: "0 0 20px", fontSize: 15, lineHeight: 1.6 }}>Inhalt folgt in Kürze.</p>
+          <p style={{ margin: "0 0 var(--space-5)", fontSize: "var(--fs-body)", lineHeight: "var(--lh-relaxed)" }}>
+            Inhalt folgt in Kürze.
+          </p>
           <Button variant="go" onClick={onComplete}>
             Weiter
           </Button>
@@ -127,39 +137,52 @@ export default function LernseiteScreen({ data, onComplete, currentStep, totalSt
   return (
     <div
       className="grid-bg"
-      style={{ minHeight: "100%", display: "flex", justifyContent: "center", padding: "22px 16px 40px" }}
+      style={{
+        minHeight: "100%",
+        display: "flex",
+        justifyContent: "center",
+        padding: "var(--space-5) var(--space-4) var(--space-7)",
+      }}
     >
       <motion.div
         {...rise}
-        style={{ width: "100%", maxWidth: 460, display: "flex", flexDirection: "column", gap: 14 }}
+        style={{
+          width: "100%",
+          maxWidth: 460,
+          display: "flex",
+          flexDirection: "column",
+          gap: "var(--space-4)",
+        }}
       >
         {/* HEADER */}
         <Panel>
-          <div
+          <Eyebrow>
+            {data.eyebrow} · Schritt {currentStep} / {totalSteps}
+          </Eyebrow>
+          <h1
             style={{
-              fontSize: 10.5,
-              letterSpacing: ".22em",
-              textTransform: "uppercase",
-              color: "var(--c-teal)",
+              fontSize: "var(--fs-display)",
+              fontWeight: 500,
+              margin: "var(--space-2) 0 var(--space-2)",
+              letterSpacing: "-.01em",
             }}
           >
-            {data.eyebrow} · Schritt {currentStep} / {totalSteps}
-          </div>
-          <h1 style={{ fontSize: 25, fontWeight: 500, margin: "5px 0 6px", letterSpacing: "-.01em" }}>
             {data.titel}
           </h1>
-          <div style={{ fontSize: 14, color: "var(--c-dim)" }}>{renderFormelText(data.formelText)}</div>
-          <ProgressBar done={currentStep} total={totalSteps} style={{ marginTop: 13 }} />
+          <div style={{ fontSize: "var(--fs-body)", color: "var(--c-dim)" }}>
+            {renderFormelText(data.formelText)}
+          </div>
+          <ProgressBar done={currentStep} total={totalSteps} style={{ marginTop: "var(--space-3)" }} />
         </Panel>
 
         {/* REAL WORLD ANCHOR */}
         {data.anker && (
           <Panel>
-            <div style={{ ...tagStyle, marginBottom: 9 }}>
+            <div style={{ ...tagStyle, marginBottom: "var(--space-2)" }}>
               <TagDot />
               Wo's vorkommt
             </div>
-            <div style={{ fontSize: 14.5, lineHeight: 1.5 }}>
+            <div style={{ fontSize: "var(--fs-body)", lineHeight: "var(--lh-base)" }}>
               {renderHighlighted(data.anker.text, data.anker.highlights)}
             </div>
           </Panel>
@@ -178,7 +201,7 @@ export default function LernseiteScreen({ data, onComplete, currentStep, totalSt
                 alignItems: "center",
                 justifyContent: "space-between",
                 width: "100%",
-                fontSize: 13,
+                fontSize: "var(--fs-sm)",
                 color: "var(--c-dim)",
               }}
             >
@@ -210,17 +233,17 @@ export default function LernseiteScreen({ data, onComplete, currentStep, totalSt
                   transition={{ duration: motionTokens.duration.base, ease: motionTokens.ease.standard }}
                   style={{ overflow: "hidden" }}
                 >
-                  <div style={{ paddingTop: 11 }}>
+                  <div style={{ paddingTop: "var(--space-3)" }}>
                     {data.warum.punkte.map((p) => (
                       <div
                         key={p.label}
                         style={{
                           display: "flex",
-                          gap: 9,
+                          gap: "var(--space-2)",
                           alignItems: "flex-start",
-                          fontSize: 13,
-                          lineHeight: 1.45,
-                          marginBottom: 7,
+                          fontSize: "var(--fs-sm)",
+                          lineHeight: "var(--lh-base)",
+                          marginBottom: "var(--space-2)",
                         }}
                       >
                         <em
@@ -252,23 +275,23 @@ export default function LernseiteScreen({ data, onComplete, currentStep, totalSt
                 display: "flex",
                 alignItems: "baseline",
                 justifyContent: "space-between",
-                marginBottom: 4,
+                marginBottom: "var(--space-1)",
               }}
             >
               <div style={tagStyle}>
                 <TagDot color="var(--c-teal)" />
                 Probier's
               </div>
-              <div style={{ fontSize: 11, color: "var(--c-dim)" }}>{interaktiv.hint}</div>
+              <div style={{ fontSize: "var(--fs-micro)", color: "var(--c-dim)" }}>{interaktiv.hint}</div>
             </div>
 
             <div
               style={{
                 display: "grid",
                 gridTemplateColumns: "188px 1fr",
-                gap: 14,
+                gap: "var(--space-4)",
                 alignItems: "center",
-                marginTop: 12,
+                marginTop: "var(--space-3)",
               }}
             >
               <svg viewBox="0 0 220 190" width="188" role="img" aria-label="U-R-I Dreieck">
@@ -321,28 +344,30 @@ export default function LernseiteScreen({ data, onComplete, currentStep, totalSt
                 style={{
                   border: "1px solid var(--c-edge)",
                   borderRadius: 11,
-                  padding: "13px 13px 14px",
+                  padding: "var(--space-3) var(--space-3) var(--space-4)",
                   background: "color-mix(in srgb, var(--c-teal) 5%, var(--c-bg2))",
                 }}
               >
                 <div
-                  style={{ fontSize: 10, letterSpacing: ".2em", textTransform: "uppercase", color: "var(--c-dim)" }}
+                  style={{ fontSize: "var(--fs-micro)", letterSpacing: ".2em", textTransform: "uppercase", color: "var(--c-dim)" }}
                 >
                   {m.label} gesucht
                 </div>
                 <div
                   style={{
                     fontFamily: "var(--font-mono)",
-                    fontSize: 30,
+                    fontSize: 30, // bewusste Out-of-band-Hero-Zahl (Readout)
                     fontWeight: 600,
                     color: "var(--c-ember)",
                     letterSpacing: "-.01em",
-                    margin: "2px 0 10px",
+                    margin: "var(--space-1) 0 var(--space-3)",
                   }}
                 >
                   {m.result}
                 </div>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--c-teal)", marginBottom: 8 }}>
+                <div
+                  style={{ fontFamily: "var(--font-mono)", fontSize: "var(--fs-sm)", color: "var(--c-teal)", marginBottom: "var(--space-2)" }}
+                >
                   {m.formel}
                 </div>
                 {m.worked.map((line, i) => {
@@ -352,13 +377,13 @@ export default function LernseiteScreen({ data, onComplete, currentStep, totalSt
                       key={line}
                       style={{
                         fontFamily: "var(--font-mono)",
-                        fontSize: 12.5,
+                        fontSize: "var(--fs-label)",
                         color: final ? "var(--c-teal)" : "var(--c-ink)",
                         fontWeight: final ? 600 : 400,
                         display: "flex",
-                        gap: 7,
+                        gap: "var(--space-2)",
                         alignItems: "center",
-                        marginTop: 5,
+                        marginTop: "var(--space-2)",
                       }}
                     >
                       <span style={{ color: "var(--c-teal)" }}>{final ? "→" : "·"}</span>
@@ -374,19 +399,19 @@ export default function LernseiteScreen({ data, onComplete, currentStep, totalSt
         {/* SIGNATURE — Formel-Card (typ === "formel"): Formel + Rechenbeispiel */}
         {isFormel && interaktiv.formel && (
           <Panel>
-            <div style={{ ...tagStyle, marginBottom: 10 }}>
+            <div style={{ ...tagStyle, marginBottom: "var(--space-3)" }}>
               <TagDot color="var(--c-teal)" />
               Formel
             </div>
             <div
               style={{
                 fontFamily: "var(--font-mono)",
-                fontSize: 22,
+                fontSize: "var(--fs-h1)",
                 fontWeight: 600,
                 color: "var(--c-teal)",
                 textAlign: "center",
-                lineHeight: 1.3,
-                margin: "2px 0 14px",
+                lineHeight: "var(--lh-tight)",
+                margin: "var(--space-1) 0 var(--space-4)",
               }}
             >
               {interaktiv.formel}
@@ -397,7 +422,7 @@ export default function LernseiteScreen({ data, onComplete, currentStep, totalSt
                 style={{
                   border: "1px solid var(--c-edge)",
                   borderRadius: 11,
-                  padding: "13px 13px 14px",
+                  padding: "var(--space-3) var(--space-3) var(--space-4)",
                   background: "color-mix(in srgb, var(--c-teal) 5%, var(--c-bg2))",
                 }}
               >
@@ -406,13 +431,13 @@ export default function LernseiteScreen({ data, onComplete, currentStep, totalSt
                     key={i}
                     style={{
                       fontFamily: "var(--font-mono)",
-                      fontSize: 12.5,
+                      fontSize: "var(--fs-label)",
                       color: "var(--c-ink)",
                       display: "flex",
-                      gap: 7,
+                      gap: "var(--space-2)",
                       alignItems: "flex-start",
-                      lineHeight: 1.45,
-                      marginTop: i === 0 ? 0 : 5,
+                      lineHeight: "var(--lh-base)",
+                      marginTop: i === 0 ? 0 : "var(--space-2)",
                     }}
                   >
                     <span style={{ color: "var(--c-teal)" }}>·</span>
@@ -423,11 +448,11 @@ export default function LernseiteScreen({ data, onComplete, currentStep, totalSt
                   <div
                     style={{
                       fontFamily: "var(--font-mono)",
-                      fontSize: 15,
+                      fontSize: "var(--fs-body)",
                       fontWeight: 600,
                       color: "var(--c-ember)",
-                      lineHeight: 1.4,
-                      marginTop: (interaktiv.beispiel.werte || []).length ? 11 : 0,
+                      lineHeight: "var(--lh-base)",
+                      marginTop: (interaktiv.beispiel.werte || []).length ? "var(--space-3)" : 0,
                     }}
                   >
                     → {interaktiv.beispiel.ergebnis}
@@ -441,7 +466,7 @@ export default function LernseiteScreen({ data, onComplete, currentStep, totalSt
         {/* SELF-EXPLANATION teaser */}
         {data.teaser && (
           <Panel>
-            <div style={{ fontSize: 13.5, lineHeight: 1.45 }}>{data.teaser}</div>
+            <div style={{ fontSize: "var(--fs-sm)", lineHeight: "var(--lh-base)" }}>{data.teaser}</div>
           </Panel>
         )}
 

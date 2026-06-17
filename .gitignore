@@ -15,3 +15,6 @@ app/dist/
 
 # Logs
 npm-debug.log*
+
+# Migration B backup (temporär — nach grünem Commit löschbar)
+app/.bak-migB/

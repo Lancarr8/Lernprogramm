@@ -12,7 +12,7 @@ export default function Panel({ children, brackets = true, tone = "pan", style, 
         background: bg,
         border: "1px solid var(--c-edge)",
         borderRadius: "var(--radius-md)",
-        padding: 16,
+        padding: "var(--space-4)",
         ...style,
       }}
       {...rest}

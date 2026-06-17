@@ -6,19 +6,26 @@ import ProgressBar from "../components/ProgressBar.jsx";
 import { rise } from "../theme/motion.js";
 import * as allContent from "../content/index.js";
 import { loadProgress } from "../data/progress.js";
+import { IconCheck, IconLock, IconArrow } from "../components/Icons.jsx";
 
 // LernfeldScreen — Alle Themenbereiche eines Lernfelds + persönliche Roadmap.
 // Schrittanzahl pro Themenbereich kommt dynamisch aus der Content-Definition
 // (lazy import), nie aus einer Konstante.
 
+function StatusIcon({ state }) {
+  if (state === "done") return <IconCheck size={17} />;
+  if (state === "locked") return <IconLock size={16} />;
+  return <IconArrow size={17} />; // open
+}
+
 function getStepStatus(tf, progress, unlocked) {
   const tfProgress = progress.lernfelder[tf._lernfeldId]?.themenfelder?.[tf.id];
   const completed = !!tfProgress?.completed;
   const started = !!tfProgress?.screens?.some(Boolean);
-  if (completed) return { icon: "✓", color: "var(--c-teal)", label: "Wiederholen", state: "done" };
-  if (!unlocked) return { icon: "🔒", color: "var(--c-dim)", label: "Gesperrt", state: "locked" };
-  if (started) return { icon: "→", color: "var(--c-ink)", label: "Weitermachen", state: "open" };
-  return { icon: "→", color: "var(--c-ink)", label: "Starten", state: "open" };
+  if (completed) return { color: "var(--c-teal)", label: "Wiederholen", state: "done" };
+  if (!unlocked) return { color: "var(--c-dim)", label: "Gesperrt", state: "locked" };
+  if (started) return { color: "var(--c-ink)", label: "Weitermachen", state: "open" };
+  return { color: "var(--c-ink)", label: "Starten", state: "open" };
 }
 
 export default function LernfeldScreen({ navigate, context }) {
@@ -123,9 +130,9 @@ export default function LernfeldScreen({ navigate, context }) {
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <span
                   aria-hidden="true"
-                  style={{ fontSize: 16, color: status.color, width: 18, textAlign: "center" }}
+                  style={{ color: status.color, width: 18, display: "inline-flex", justifyContent: "center" }}
                 >
-                  {status.icon}
+                  <StatusIcon state={status.state} />
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h2 style={{ margin: 0, fontSize: 16 }}>{tf.titel}</h2>

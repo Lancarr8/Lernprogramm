@@ -1,222 +1,157 @@
-# NEXT_STEP.md — Classifier: Wechsel auf TensorFlow.js
-> Aktiver Auftrag für CC. Nur classifier.js + vite.config.js + packages ändern.
-> Nicht autonom editieren: Roadmap.md, HANDOFF.md, REQUIREMENTS.md.
+# NEXT_STEP — Migration B: Token-Sweep + Primitive-Adoption
+Stand: 2026-06-16 · Autorität: Nico/Chat-Claude · CC führt aus.
 
-## Warum
-@xenova/transformers + ONNX Runtime hängt im Browser (SharedArrayBuffer-Problem).
-TensorFlow.js nutzt WebGL — kein ONNX, kein SharedArrayBuffer, funktioniert in jedem Browser.
+## Ziel
+Hardcodes für Font-Size / Spacing / Line-Height → Tokens. Plus Adoption der
+Primitive Eyebrow / SectionTag / Stack. Rein visuell/strukturell — kein neues
+Verhalten, keine Logik-, keine Farbänderung.
 
----
+## Scope
+IN:
+- Landing(-Screen)
+- Flow-Screens (alle Screens des Lern-Flows)
+- Komponenten: Panel, Button, ProgressBar
+OUT (nicht anfassen):
+- Dashboard, Lernfeld → werden später token-nativ neu gebaut (Roadmap Punkt 2)
+- Doku (Roadmap/HANDOFF/REQUIREMENTS)
+- Farb-Rollen (in Migration A erledigt)
+- Heading-Weight (bleibt 500)
 
-## Task 1 — Pakete tauschen
+## Grundregeln
+- Nicht pixelidentisch. Snaps ≤2px sind gewollt — auf Token runden, alten Wert
+  NICHT erhalten.
+- Nur die drei Achsen Font/Spacing/LineHeight + die drei Primitive. Sonst nichts.
+- write_file überschreibt komplett → pro Datei erst Inventar/Diff zeigen → GO → schreiben.
+- Exakte Token-Identifier (CSS-Var-Strings bzw. tokens.js-Keys) in Step 0 aus dem
+  Code verifizieren. Die Namen unten sind die Rollen, nicht zwingend die var-Strings.
+- Pro Datei die Styling-Form treffen: var(--…) in CSS vs. tokens.js-Wert im Inline-Style.
 
-```bash
-cd app
-npm uninstall @xenova/transformers
-npm install @tensorflow/tfjs @tensorflow-models/universal-sentence-encoder
-```
+## Mapping — Font-Size (roh px → Token)
+| roh                   | Token        | px |
+|-----------------------|--------------|----|
+| 28 / 26 / 25          | --fs-display | 28 |
+| 22 / 21 / 20          | --fs-h1      | 22 |
+| 18                    | --fs-h2      | 18 |
+| 16.5 / 16             | --fs-h3      | 16 |
+| 15.5 / 15 / 14.5 / 14 | --fs-body    | 15 |
+| 13.5 / 13             | --fs-sm      | 13 |
+| 12.5 / 12             | --fs-label   | 12 |
+| 11.5 / 11 / 10.5 / 10 | --fs-micro   | 11 |
+Zwischenwerte (z.B. 24/23/19/17) und alles außerhalb 10–28 → Inventar, nicht auto-mappen.
 
----
+## Mapping — Spacing (roh px → Token), gilt für margin/padding/gap
+| roh    | Token     | px |
+|--------|-----------|----|
+| 2–4    | --space-1 | 4  |
+| 5–9    | --space-2 | 8  |
+| 10–13  | --space-3 | 12 |
+| 14–16  | --space-4 | 16 |
+| 20–24  | --space-5 | 24 |
+| 26–32  | --space-6 | 32 |
+| 40–48  | --space-7 | 48 |
+| 64     | --space-8 | 64 |
+Werte zwischen den Bändern (17–19, 33–39, 49–63) → Inventar, nicht auto-mappen.
 
-## Task 2 — vite.config.js bereinigen
+## Mapping — Line-Height (nach Rolle, NICHT pixelweise)
+- Headings / display → --lh-tight
+- Fließtext / Body / UI-Labels → --lh-base
+- Langform-Lesetext (lange Absätze, Erklärtexte) → --lh-relaxed
+Riskanteste Achse: Sprünge >2px möglich. Daher confirm-each — CC listet jeden
+gefundenen Roh-Wert mit vorgeschlagenem Token im Inventar, Nico bestätigt einzeln.
+Numerische Werte von --lh-tight/base/relaxed in Step 0 aus tokens.js verifizieren;
+uneindeutige Roh-Werte markieren statt raten.
 
-`optimizeDeps.exclude: ["@xenova/transformers"]` entfernen.
-Falls keine anderen excludes mehr da sind, den ganzen `optimizeDeps`-Block entfernen.
+## Primitive-Adoption
+Ad-hoc-Umsetzungen durch Primitive ersetzen, NUR bei eindeutigem Muster-Match:
+- Eyebrow: kleines Uppercase-Label über Headings → <Eyebrow>
+- SectionTag: Abschnitts-Tags/-Marker → <SectionTag>
+- Stack: manuelles vertikales Spacing (margin-bottom-Ketten / flex-column+gap)
+  → <Stack> mit Token-gap
+Unsichere Fälle ins Inventar, nicht raten. Echte Props der drei Primitive in Step 0
+aus dem Code bestätigen — nicht aus dieser Spec annehmen.
 
----
+## Ausführungs-Protokoll (CC)
+0. Inventar erstellen & zeigen (vor jeder Änderung):
+   a. Konkrete Datei-Liste im Scope (echte Pfade).
+   b. Exakte Token-Identifier + Line-Height-Werte aus tokens.js/cssVars.
+   c. Props-Signaturen von Eyebrow/SectionTag/Stack aus dem Code.
+   d. Pro Datei: alle Font/Spacing/LineHeight-Hardcodes + Adoption-Kandidaten,
+      je mit vorgeschlagenem Token/Primitive.
+1. Auf GO warten.
+2. Datei für Datei: Diff-Preview → GO → write_file.
+3. Nach jedem File: kurzer Render-/Verhaltens-Check.
 
-## Task 3 — classifier.js neu schreiben
+## Akzeptanzkriterien
+- Keine rohen Font-Size/Spacing-Werte mehr im Scope (außer bewusst ausgenommene).
+- Line-Height im Scope über Tokens.
+- Eyebrow/SectionTag/Stack adoptiert, wo Muster passt.
+- Kein Verhaltens-/Logik-/Farbwechsel. Heading-Weight 500.
+- Visuelle Abweichung ≤2px ok, keine offensichtlichen Layout-Brüche.
+- Dashboard/Lernfeld unangetastet.
 
-Ersetze den gesamten Inhalt von `app/src/data/classifier.js`:
+## Nicht in dieser Migration
+- Dashboard/Lernfeld-Rebuild, loadProgress-Reaktivität (Roadmap Punkt 2)
+- Landingpage-als-Code-Screen (Punkt 3)
 
-```js
-// classifier.js — Semantische Klassifikation via TensorFlow.js Universal Sentence Encoder.
-// Kein ONNX, kein SharedArrayBuffer — läuft per WebGL in jedem modernen Browser.
-// Kontrastiver Ansatz für Fehlvorstellungen: MC feuert nur wenn ähnlicher als alle KPs.
+## Step-0-Entscheidungen (Migration B) — verbindlich
 
-import * as tf from "@tensorflow/tfjs";
-import * as use from "@tensorflow-models/universal-sentence-encoder";
+Line-Height (confirm-each, jetzt fix):
+- 1.45 / 1.5 / 1.55 → --lh-base
+- 1.6 (Erklär-/Subtexte) → --lh-relaxed
+- 1.7 (AUFGEBAUT-MIT-Liste) → --lh-relaxed
+- 1.3 (Formel-Card) → --lh-tight  (falls Render-Check Enge zeigt: base)
+- 1.4 / 1.45 (mono Worked-Steps) → --lh-base
 
-const KP_THRESHOLD = 0.58;
-const MC_MIN       = 0.70;
-const MC_CONTRAST  = 0.02;
+Font out-of-band:
+- 25 → --fs-display  (per Mapping-Tabelle, +3px akzeptiert)
+- 30 (LernseiteScreen Readout-Zahl) → roh lassen + Code-Kommentar „bewusste Out-of-band-Hero-Zahl"
 
-let model = null;
-let loadingPromise = null;
+Spacing-Snaps:
+- 40 → --space-7  (+8px Bottom-Padding, ok)
+- marginTop:1 (Icon-Nudges) → roh lassen (optischer Nudge, kein Scale-Wert)
 
-export async function loadClassifier(onProgress) {
-  if (model) return model;
-  if (loadingPromise) return loadingPromise;
+SectionTag-Margin (Variante B):
+- 12px als marginBottom: var(--space-3) Style-Override an SectionTag
+- Ausnahme: wo der direkte Parent in derselben Datei zu <Stack> wird → Stack-gap (space-3) übernimmt, kein Override
 
-  // TF.js meldet keinen Fortschritt — onProgress einmalig mit 50% simulieren
-  if (onProgress) onProgress({ status: "progress", progress: 50 });
-
-  loadingPromise = use.load().then((m) => {
-    model = m;
-    if (onProgress) onProgress({ status: "progress", progress: 100 });
-    return m;
-  });
-
-  return loadingPromise;
-}
-
-// Text → Float32Array Embedding (512-dimensional)
-async function embed(text) {
-  const tensor = await model.embed([text]);
-  const data = await tensor.data();
-  tensor.dispose();
-  return Array.from(data);
-}
-
-// Kosinus-Ähnlichkeit
-function cosineSim(a, b) {
-  let dot = 0, na = 0, nb = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    na  += a[i] * a[i];
-    nb  += b[i] * b[i];
-  }
-  return dot / (Math.sqrt(na) * Math.sqrt(nb));
-}
-
-// Text in Sätze aufteilen
-function splitSentences(text) {
-  return text
-    .split(/[.!?]+/)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 8);
-}
-
-// Hauptfunktion — Vertrag identisch zu bisheriger classifyExplanation
-export async function classifyExplanation(rawText, concept) {
-  if (!model) throw new Error("Classifier nicht geladen — loadClassifier() zuerst aufrufen");
-
-  const sentences = splitSentences(rawText);
-  if (sentences.length === 0) {
-    return { covered: [], misconceptions: [], confidence: 0 };
-  }
-
-  // Satz-Embeddings (batch für Effizienz)
-  const sentenceTensor = await model.embed(sentences);
-  const sentenceData = await sentenceTensor.data();
-  sentenceTensor.dispose();
-
-  const dim = 512;
-  const sentenceVecs = sentences.map((_, i) =>
-    Array.from(sentenceData.slice(i * dim, (i + 1) * dim))
-  );
-
-  // KP-Embeddings (für Kernpunkte + MC-Kontrast)
-  const kpVecs = await Promise.all(concept.keyPoints.map((kp) => embed(kp.canonical)));
-
-  // --- Kernpunkte ---
-  const covered = [];
-  for (let ki = 0; ki < concept.keyPoints.length; ki++) {
-    const maxSim = Math.max(...sentenceVecs.map((sv) => cosineSim(sv, kpVecs[ki])));
-    if (maxSim >= KP_THRESHOLD) covered.push(concept.keyPoints[ki].id);
-  }
-
-  // --- Fehlvorstellungen (kontrastiv) ---
-  const misconceptions = [];
-  for (const mc of concept.misconceptions) {
-    const mcVec = await embed(mc.beschreibung);
-    let triggered = false;
-
-    for (const sv of sentenceVecs) {
-      const simToMC     = cosineSim(sv, mcVec);
-      const maxSimToKPs = Math.max(...kpVecs.map((kv) => cosineSim(sv, kv)));
-
-      if (simToMC >= MC_MIN && simToMC > maxSimToKPs + MC_CONTRAST) {
-        triggered = true;
-        break;
-      }
-    }
-
-    if (triggered) misconceptions.push(mc.id);
-  }
-
-  return { covered, misconceptions, confidence: 0.85 };
-}
-```
+## Ausführungsmodus (dieser Sweep) — hat VORRANG vor „Ausführungs-Protokoll (CC)" Punkt 2 oben
+1. Backup zuerst: die 11 Scope-Dateien nach app/.bak-migB/ kopieren.
+2. Sweep über alle 11 Dateien in EINEM Durchgang (Reihenfolge klein→groß wie im Step-0-Inventar).
+3. Gesamt-Diff über alle Dateien zeigen — NICHT schreiben.
+4. Auf Schreib-GO warten.
+5. Nach GO alle Dateien rausschreiben.
+6. Render-Check; bei Bruch betroffene Datei aus app/.bak-migB/ zurück + gezielt fixen.
 
 ---
 
-## Task 4 — Verifikation
+## STATUS: MIGRATION B COMPLETE
 
-### Node-Test (wie bisher)
-Verifiziere mit den Demo-Texten aus dem letzten Task.
-Falls Schwellwerte nachkalibriert werden müssen: in 0.02er-Schritten.
-Ziel: stark → 4 KPs, 0 MCs · schwach → <4 KPs, mc1 erkannt.
+Erledigt am 2026-06-16. Backup der 11 Dateien in `app/.bak-migB/` (Safety-Net, nach Review löschbar).
 
-### Browser-Test in echtem Chrome
-```bash
-npm run build && npm run preview
-```
-- [ ] Modell lädt durch (kein Hang)
-- [ ] Button wird nach Laden aktiv
-- [ ] Ein Satz → sinnvolles Ergebnis
+### Achsen-Sweep (Font / Spacing / Line-Height → Tokens)
+Alle rohen fontSize/spacing/lineHeight im Scope durch `var(--…)` ersetzt, gemäß den
+verbindlichen Step-0-Maps. **Bewusst roh gelassen:** Readout-`fontSize:30` (Hero-Zahl, mit Kommentar),
+`marginTop:1`-Icon-Nudges, `paddingLeft:18` (Zwischenband 17–19), Geometrie (Checkbox 18/5, Dot 5,
+SVG-Attribute/Koordinaten), Radien, Border-Breiten, `flex-basis`, `letterSpacing` (keine der 3 Achsen).
+Line-Heights: 1.4/1.45/1.5/1.55→base, 1.3→tight, 1.6/1.7→relaxed.
 
----
+### Primitive-Adoption
+- **Eyebrow ×2:** LandingScreen Top-Marke, LernseiteScreen Header (`<Eyebrow>`; ls→`--ls-eyebrow`).
+- **SectionTag ×8:** Aufgaben (BERECHNUNG/MULTIPLE CHOICE/AUFGABEN), Schaltung (SCHALTUNG×2-Branches/
+  AUFGEBAUT MIT), SelbstBauen (SELBST BAUEN/MATERIAL/AUFBAU) — Margin-Variante B (`marginBottom:var(--space-3)`
+  als Style-Override); lokale `const eyebrow` entfernt.
+- **Stack ×0:** Spalten-Container sind animierte `motion.div` (rise) → bewusst NICHT geswappt
+  (Verhaltenswechsel/Animationsverlust vermieden); gaps stattdessen in-place tokenisiert.
+- Shell-/SelfExpl-Eyebrows: KEIN Eyebrow (nicht uppercase → Optik bliebe nicht erhalten).
 
-## Definition of Done
+### Verifikation
+- ✅ `npm run lint` 0/0 · ✅ `npm run build` 0 Errors · ✅ keine Konsolenfehler.
+- ✅ Render (Dev, computed): Landing-Eyebrow 11px/uppercase/ls 2.2px(0.2em)/teal · h1 28px(display) ·
+  Landing-Panel-Override 32/24/24 · Lernseite-Header-Eyebrow 11px/uppercase · Readout 30px (roh) ·
+  Panel-Padding 16px(space-4) · Aufgaben-SectionTag 12px/uppercase/mb 12px · Shell-Eyebrow „LF 1 · …".
+- ✅ Alle 6 Screens (Landing + Lernseite/Aufgaben/SelfExpl/Schaltung/SelbstBauen) rendern ohne Bruch.
+- Dashboard/Lernfeld unangetastet (außerhalb Scope).
 
-- [ ] `npm run lint` → 0 Errors
-- [ ] `npm run build` → 0 Errors
-- [ ] Node-Verifikation: Demo-Texte korrekt klassifiziert
-- [ ] Browser: Modell initialisiert ohne Hang
-- [ ] `@xenova/transformers` nicht mehr in package.json
-
-## Wenn fertig
-Schreibe: `## STATUS: TENSORFLOW COMPLETE`
-Dokumentiere: Modell-Ladezeit im Browser + Similarity-Werte der Demo-Texte.
-Warte auf Nicos Review.
-
----
-
-## STATUS: TENSORFLOW COMPLETE — Browser-Hänger gelöst ✅
-
-Erledigt am 2026-06-14. **Der ONNX/SharedArrayBuffer-Hänger ist weg** — das Modell
-initialisiert jetzt im Browser.
-
-### Tasks
-- ✅ Task 1: `@xenova/transformers` deinstalliert, `@tensorflow/tfjs` +
-  `@tensorflow-models/universal-sentence-encoder` installiert. xenova nicht mehr in package.json.
-- ✅ Task 2: `optimizeDeps`-Block aus `vite.config.js` entfernt.
-- ✅ Task 3: `classifier.js` auf TF.js USE umgeschrieben (Vertrag identisch).
-  **Abweichung (wie Vorphasen, bewusst):** tfjs+USE per dynamischem `import()` in loadClassifier
-  statt statisch — sonst landet ~1,9 MB im Haupt-Bundle. Jetzt eigener Lazy-Chunk (1,9 MB),
-  Haupt-Bundle 315 KB. Nebeneffekt: kein ungenutzter `import * as tf` (Lint sauber).
-
-### Kalibrierung (Node-Sweep, echte classifier.js-Funktionen)
-USE ist **englisch** trainiert und bettet deutschen Text uniform hoch ein (~0.83–0.93),
-daher deutlich höhere Schwellwerte als beim multilingualen Modell:
-```
-KP_THRESHOLD = 0.86   MC_MIN = 0.70   MC_CONTRAST = 0.045
-```
-Similarity-Werte der Demos (maxSim Satz↔Referenz):
-```
-strong  KP: kp1=0.932 kp2=0.891 kp3=0.893 kp4=0.894   (alle ≥0.86 → 4/4)
-        MC: mc1 Δ=−0.004  mc2 Δ=−0.011  mc3 Δ=0.038 (<0.045)   → 0 MC
-weak    KP: kp1=0.829 kp2=0.849 kp3=0.857 kp4=0.870   (nur kp4 ≥0.86 → 1/4)
-        MC: mc1 Δ=0.064 ✓  mc2 Δ=0.051 ✓  mc3 Δ=0.013 (<0.045)  → [mc1,mc2]
-```
-Ergebnis (echte Funktionen): **strong → 4/4 KP, 0 MC** · **weak → 1/4 KP, [mc1,mc2]**
-(mc1 erkannt; mc2 korrekt — der Text sagt wörtlich „Spannung und Strom sind dasselbe").
-
-### Browser-Test (Prod-Build, `npm run preview`)
-- ✅ Modell lädt durch, **kein Hang**. „Prüfen" wird nach **~4 s** aktiv.
-- ✅ Erste Inferenz dauert ~15–20 s (einmaliger WebGL-Shader-Warmup), danach schnell.
-- ✅ Starker Text → „Sitzt — alle Kernpunkte getroffen" + „Weiter zur Schaltung".
-- ✅ Schwacher Text → „1 von 4 Kernpunkten · 2 Stolpersteine", Fehlvorstellung mc1 erkannt
-  und angezeigt, „Erklärung verbessern". Browser-Ergebnis = Node-Ergebnis.
-- ✅ Keine Konsolenfehler. `npm run lint` 0/0 · `npm run build` 0 Errors.
-- Hinweis: getestet im Preview-Sandbox-Browser (der vorher mit ONNX hing) — TF.js läuft dort
-  jetzt durch. In deinem echten Chrome/Edge sollte es genauso oder schneller sein.
-
-### Caveats für Nico
-- **Englisches Modell auf Deutsch:** Embeddings sind uniform hoch, Trennband schmal
-  (KP-Lücke strong↔weak nur ~0.02). An 2 Demos kalibriert — für beliebige Azubi-Eingaben
-  nicht robust. Für echten Einsatz: mehr Beispieltexte zum Kalibrieren, oder multilinguales
-  USE (`use.loadQnA` ist es nicht; das mehrsprachige USE müsste man von separater TFHub-URL laden).
-- **Erst-Inferenz-Warmup ~15–20 s:** evtl. ein „einen Moment…"-Hinweis beim ersten Prüfen sinnvoll
-  (würde SelfExplanationScreen berühren → dein GO).
+### Berührte Files (11)
+`components/{Panel,Button,ProgressBar}.jsx` · `screens/LandingScreen.jsx` ·
+`screens/flow/{FlowController,CircuitBuilder,SchaltungScreen,AufgabenScreen,SelbstBauenScreen,LernseiteScreen,SelfExplanationScreen}.jsx`

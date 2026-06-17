@@ -53,7 +53,7 @@ export default function FlowController({ navigate, context }) {
         className="grid-bg"
         style={{ minHeight: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
       >
-        <span style={{ color: "var(--c-teal)", fontFamily: "var(--font-mono)", fontSize: 13 }}>
+        <span style={{ color: "var(--c-teal)", fontFamily: "var(--font-mono)", fontSize: "var(--fs-sm)" }}>
           Lade…
         </span>
       </div>
@@ -63,13 +63,18 @@ export default function FlowController({ navigate, context }) {
   const currentStep = steps[currentIndex];
   const ScreenComponent = SCREEN_MAP[currentStep.type];
 
+  // Kontext (Lernfeld-Nr. + Thema) synchron aus dem Content auflösen — für den Eyebrow.
+  const lf = Object.values(allContent).find((l) => l.id === lernfeldId);
+  const tfMeta = lf?.themenfelder.find((t) => t.id === themenfeldId);
+  const kontext = { lfNummer: lf?.ihkNummer, thema: tfMeta?.titel };
+
   if (!ScreenComponent) {
     return (
       <div
         className="grid-bg"
         style={{ minHeight: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
       >
-        <span style={{ color: "var(--c-warn)", fontFamily: "var(--font-mono)", fontSize: 13 }}>
+        <span style={{ color: "var(--c-warn)", fontFamily: "var(--font-mono)", fontSize: "var(--fs-sm)" }}>
           Unbekannter Screen-Typ: {currentStep.type}
         </span>
       </div>
@@ -111,6 +116,7 @@ export default function FlowController({ navigate, context }) {
           navigate={navigate}
           currentStep={currentIndex + 1}
           totalSteps={steps.length}
+          kontext={kontext}
           lernfeldId={lernfeldId}
           themenfeldId={themenfeldId}
         />

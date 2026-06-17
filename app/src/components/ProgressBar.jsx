@@ -9,7 +9,7 @@ export default function ProgressBar({ done = 0, total = 0, style }) {
       aria-valuenow={done}
       aria-valuemin={0}
       aria-valuemax={total}
-      style={{ display: "flex", gap: 5, ...style }}
+      style={{ display: "flex", gap: "var(--space-2)", ...style }}
     >
       {Array.from({ length: Math.max(total, 1) }).map((_, i) => (
         <span
