@@ -2,10 +2,10 @@
 // Screens: "landing" | "dashboard" | "lernfeld" | "flow"
 
 import { useState } from "react";
-import { loadProgress } from "./data/progress.js";
+import { useProgress } from "./data/ProgressContext.jsx";
 
 export function useRouter() {
-  const progress = loadProgress();
+  const { progress } = useProgress();
   const initialScreen = progress.lastVisited ? "dashboard" : "landing";
 
   const [screen, setScreen] = useState(initialScreen);

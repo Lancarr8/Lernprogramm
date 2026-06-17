@@ -5,7 +5,7 @@ import Button from "../components/Button.jsx";
 import ProgressBar from "../components/ProgressBar.jsx";
 import { rise } from "../theme/motion.js";
 import * as allContent from "../content/index.js";
-import { loadProgress } from "../data/progress.js";
+import { useProgress } from "../data/ProgressContext.jsx";
 import { IconCheck, IconLock, IconArrow } from "../components/Icons.jsx";
 
 // LernfeldScreen — Alle Themenbereiche eines Lernfelds + persönliche Roadmap.
@@ -29,7 +29,7 @@ function getStepStatus(tf, progress, unlocked) {
 }
 
 export default function LernfeldScreen({ navigate, context }) {
-  const progress = loadProgress();
+  const { progress } = useProgress();
   const lernfeld = Object.values(allContent).find((lf) => lf.id === context?.lernfeldId);
 
   // Schrittanzahl pro Themenbereich aus den lazy-geladenen tf-Modulen auflösen.

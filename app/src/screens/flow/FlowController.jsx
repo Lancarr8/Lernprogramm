@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { markScreenDone } from "../../data/progress.js";
+import { useProgress } from "../../data/ProgressContext.jsx";
 import * as allContent from "../../content/index.js";
 import { fade } from "../../theme/motion.js";
 import Button from "../../components/Button.jsx";
@@ -20,6 +20,7 @@ const SCREEN_MAP = {
 
 export default function FlowController({ navigate, context }) {
   const { lernfeldId, themenfeldId, screenIndex = 0 } = context;
+  const { markDone } = useProgress();
   const [steps, setSteps] = useState(null);
   const [stepData, setStepData] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(screenIndex);
@@ -39,7 +40,7 @@ export default function FlowController({ navigate, context }) {
   }, [steps, currentIndex]);
 
   function handleComplete() {
-    markScreenDone(lernfeldId, themenfeldId, currentIndex, steps.length);
+    markDone(lernfeldId, themenfeldId, currentIndex, steps.length);
     if (currentIndex < steps.length - 1) {
       setCurrentIndex((i) => i + 1);
     } else {

@@ -1,157 +1,155 @@
-# NEXT_STEP — Migration B: Token-Sweep + Primitive-Adoption
-Stand: 2026-06-16 · Autorität: Nico/Chat-Claude · CC führt aus.
+# NEXT_STEP — Dashboard + Lernfeld: token-nativ + Progress-Reaktivität
+Stand: 2026-06-17 · Autorität: Nico/Chat-Claude · CC führt aus.
 
 ## Ziel
-Hardcodes für Font-Size / Spacing / Line-Height → Tokens. Plus Adoption der
-Primitive Eyebrow / SectionTag / Stack. Rein visuell/strukturell — kein neues
-Verhalten, keine Logik-, keine Farbänderung.
+Dashboard- und Lernfeld-Screen auf das Token-/Primitive-Fundament heben (wie Migration B
+bei den Flow-Screens) und den `loadProgress()`-im-Render-Smell durch einen reaktiven
+Progress-Context ersetzen. Schließt die zwei letzten offenen P0-Punkte.
+**Kein visuelles Redesign** — Layout & Hierarchie bleiben; nur Tokens, Primitive
+(Eyebrow/Icon) und Reaktivität.
 
 ## Scope
 IN:
-- Landing(-Screen)
-- Flow-Screens (alle Screens des Lern-Flows)
-- Komponenten: Panel, Button, ProgressBar
+- Phase A: `data/ProgressContext.jsx` (neu), `main.jsx`, `router.jsx`,
+  `screens/flow/FlowController.jsx`, Consumption in `screens/DashboardScreen.jsx`
+  + `screens/LernfeldScreen.jsx`.
+- Phase B: `screens/DashboardScreen.jsx`, `screens/LernfeldScreen.jsx`
+  (Tokens + Eyebrow + Icon).
+
 OUT (nicht anfassen):
-- Dashboard, Lernfeld → werden später token-nativ neu gebaut (Roadmap Punkt 2)
-- Doku (Roadmap/HANDOFF/REQUIREMENTS)
-- Farb-Rollen (in Migration A erledigt)
-- Heading-Weight (bleibt 500)
+- `data/progress.js` — bleibt Persistenz-Layer. Context ruft rein, ändert ihn nicht.
+- Flow-Screens (Lernseite/Aufgaben/SelfExpl/Schaltung/SelbstBauen), CircuitBuilder,
+  Content, Doku (Roadmap/HANDOFF/REQUIREMENTS).
+- Visuelles Redesign, Layout-Umbau, Farb-Rollen, neue npm-Deps.
 
 ## Grundregeln
-- Nicht pixelidentisch. Snaps ≤2px sind gewollt — auf Token runden, alten Wert
-  NICHT erhalten.
-- Nur die drei Achsen Font/Spacing/LineHeight + die drei Primitive. Sonst nichts.
-- write_file überschreibt komplett → pro Datei erst Inventar/Diff zeigen → GO → schreiben.
-- Exakte Token-Identifier (CSS-Var-Strings bzw. tokens.js-Keys) in Step 0 aus dem
-  Code verifizieren. Die Namen unten sind die Rollen, nicht zwingend die var-Strings.
-- Pro Datei die Styling-Form treffen: var(--…) in CSS vs. tokens.js-Wert im Inline-Style.
-
-## Mapping — Font-Size (roh px → Token)
-| roh                   | Token        | px |
-|-----------------------|--------------|----|
-| 28 / 26 / 25          | --fs-display | 28 |
-| 22 / 21 / 20          | --fs-h1      | 22 |
-| 18                    | --fs-h2      | 18 |
-| 16.5 / 16             | --fs-h3      | 16 |
-| 15.5 / 15 / 14.5 / 14 | --fs-body    | 15 |
-| 13.5 / 13             | --fs-sm      | 13 |
-| 12.5 / 12             | --fs-label   | 12 |
-| 11.5 / 11 / 10.5 / 10 | --fs-micro   | 11 |
-Zwischenwerte (z.B. 24/23/19/17) und alles außerhalb 10–28 → Inventar, nicht auto-mappen.
-
-## Mapping — Spacing (roh px → Token), gilt für margin/padding/gap
-| roh    | Token     | px |
-|--------|-----------|----|
-| 2–4    | --space-1 | 4  |
-| 5–9    | --space-2 | 8  |
-| 10–13  | --space-3 | 12 |
-| 14–16  | --space-4 | 16 |
-| 20–24  | --space-5 | 24 |
-| 26–32  | --space-6 | 32 |
-| 40–48  | --space-7 | 48 |
-| 64     | --space-8 | 64 |
-Werte zwischen den Bändern (17–19, 33–39, 49–63) → Inventar, nicht auto-mappen.
-
-## Mapping — Line-Height (nach Rolle, NICHT pixelweise)
-- Headings / display → --lh-tight
-- Fließtext / Body / UI-Labels → --lh-base
-- Langform-Lesetext (lange Absätze, Erklärtexte) → --lh-relaxed
-Riskanteste Achse: Sprünge >2px möglich. Daher confirm-each — CC listet jeden
-gefundenen Roh-Wert mit vorgeschlagenem Token im Inventar, Nico bestätigt einzeln.
-Numerische Werte von --lh-tight/base/relaxed in Step 0 aus tokens.js verifizieren;
-uneindeutige Roh-Werte markieren statt raten.
-
-## Primitive-Adoption
-Ad-hoc-Umsetzungen durch Primitive ersetzen, NUR bei eindeutigem Muster-Match:
-- Eyebrow: kleines Uppercase-Label über Headings → <Eyebrow>
-- SectionTag: Abschnitts-Tags/-Marker → <SectionTag>
-- Stack: manuelles vertikales Spacing (margin-bottom-Ketten / flex-column+gap)
-  → <Stack> mit Token-gap
-Unsichere Fälle ins Inventar, nicht raten. Echte Props der drei Primitive in Step 0
-aus dem Code bestätigen — nicht aus dieser Spec annehmen.
-
-## Ausführungs-Protokoll (CC)
-0. Inventar erstellen & zeigen (vor jeder Änderung):
-   a. Konkrete Datei-Liste im Scope (echte Pfade).
-   b. Exakte Token-Identifier + Line-Height-Werte aus tokens.js/cssVars.
-   c. Props-Signaturen von Eyebrow/SectionTag/Stack aus dem Code.
-   d. Pro Datei: alle Font/Spacing/LineHeight-Hardcodes + Adoption-Kandidaten,
-      je mit vorgeschlagenem Token/Primitive.
-1. Auf GO warten.
-2. Datei für Datei: Diff-Preview → GO → write_file.
-3. Nach jedem File: kurzer Render-/Verhaltens-Check.
-
-## Akzeptanzkriterien
-- Keine rohen Font-Size/Spacing-Werte mehr im Scope (außer bewusst ausgenommene).
-- Line-Height im Scope über Tokens.
-- Eyebrow/SectionTag/Stack adoptiert, wo Muster passt.
-- Kein Verhaltens-/Logik-/Farbwechsel. Heading-Weight 500.
-- Visuelle Abweichung ≤2px ok, keine offensichtlichen Layout-Brüche.
-- Dashboard/Lernfeld unangetastet.
-
-## Nicht in dieser Migration
-- Dashboard/Lernfeld-Rebuild, loadProgress-Reaktivität (Roadmap Punkt 2)
-- Landingpage-als-Code-Screen (Punkt 3)
-
-## Step-0-Entscheidungen (Migration B) — verbindlich
-
-Line-Height (confirm-each, jetzt fix):
-- 1.45 / 1.5 / 1.55 → --lh-base
-- 1.6 (Erklär-/Subtexte) → --lh-relaxed
-- 1.7 (AUFGEBAUT-MIT-Liste) → --lh-relaxed
-- 1.3 (Formel-Card) → --lh-tight  (falls Render-Check Enge zeigt: base)
-- 1.4 / 1.45 (mono Worked-Steps) → --lh-base
-
-Font out-of-band:
-- 25 → --fs-display  (per Mapping-Tabelle, +3px akzeptiert)
-- 30 (LernseiteScreen Readout-Zahl) → roh lassen + Code-Kommentar „bewusste Out-of-band-Hero-Zahl"
-
-Spacing-Snaps:
-- 40 → --space-7  (+8px Bottom-Padding, ok)
-- marginTop:1 (Icon-Nudges) → roh lassen (optischer Nudge, kein Scale-Wert)
-
-SectionTag-Margin (Variante B):
-- 12px als marginBottom: var(--space-3) Style-Override an SectionTag
-- Ausnahme: wo der direkte Parent in derselben Datei zu <Stack> wird → Stack-gap (space-3) übernimmt, kein Override
-
-## Ausführungsmodus (dieser Sweep) — hat VORRANG vor „Ausführungs-Protokoll (CC)" Punkt 2 oben
-1. Backup zuerst: die 11 Scope-Dateien nach app/.bak-migB/ kopieren.
-2. Sweep über alle 11 Dateien in EINEM Durchgang (Reihenfolge klein→groß wie im Step-0-Inventar).
-3. Gesamt-Diff über alle Dateien zeigen — NICHT schreiben.
-4. Auf Schreib-GO warten.
-5. Nach GO alle Dateien rausschreiben.
-6. Render-Check; bei Bruch betroffene Datei aus app/.bak-migB/ zurück + gezielt fixen.
+- GO-Regel: pro Datei erst lesen → `edit_file` mit `dryRun: true` → GO → schreiben.
+  Neue Datei (`ProgressContext.jsx`) als Vollinhalt zeigen → GO → `write_file`.
+- Code vollständig oder gar nicht.
+- Keine neuen Pakete (Context = React-built-in: `createContext`/`useContext`/`useState`).
+- Motion-GPU-Regel: nur `transform`/`opacity`. Animierte `motion.div` (rise) NICHT durch
+  `Stack` ersetzen — gaps in-place tokenisieren (Animationsverlust vermeiden).
+- Token-Identifier + Line-Height-Werte in Step 0 aus `tokens.js`/`cssVars` verifizieren,
+  nicht aus dieser Spec raten.
+- AI-Grenze unangetastet.
 
 ---
 
-## STATUS: MIGRATION B COMPLETE
+## PHASE A — Progress reaktiv (Architektur, zuerst)
 
-Erledigt am 2026-06-16. Backup der 11 Dateien in `app/.bak-migB/` (Safety-Net, nach Review löschbar).
+### A1 — Neu: `src/data/ProgressContext.jsx`
+- `createContext`; `ProgressProvider({ children })` hält `progress` in
+  `useState(() => loadProgress())`.
+- Exponiert `{ progress, markDone, reset }`:
+  - `markDone(lernfeldId, themenfeldId, screenIndex, totalScreens)` → ruft
+    `markScreenDone(...)` aus `progress.js` (persistiert), danach `setProgress(loadProgress())`.
+  - `reset()` → `resetProgress()`, danach `setProgress(loadProgress())`.
+- `useProgress()`-Hook (`useContext`); wirft, wenn außerhalb Provider verwendet.
+- Import aus `./progress.js`: `loadProgress`, `markScreenDone`, `resetProgress`.
 
-### Achsen-Sweep (Font / Spacing / Line-Height → Tokens)
-Alle rohen fontSize/spacing/lineHeight im Scope durch `var(--…)` ersetzt, gemäß den
-verbindlichen Step-0-Maps. **Bewusst roh gelassen:** Readout-`fontSize:30` (Hero-Zahl, mit Kommentar),
-`marginTop:1`-Icon-Nudges, `paddingLeft:18` (Zwischenband 17–19), Geometrie (Checkbox 18/5, Dot 5,
-SVG-Attribute/Koordinaten), Radien, Border-Breiten, `flex-basis`, `letterSpacing` (keine der 3 Achsen).
-Line-Heights: 1.4/1.45/1.5/1.55→base, 1.3→tight, 1.6/1.7→relaxed.
+### A2 — `main.jsx`
+- `<ProgressProvider>` direkt um `<App/>` (innerhalb `<MotionConfig>`, innerhalb `StrictMode`).
 
-### Primitive-Adoption
-- **Eyebrow ×2:** LandingScreen Top-Marke, LernseiteScreen Header (`<Eyebrow>`; ls→`--ls-eyebrow`).
-- **SectionTag ×8:** Aufgaben (BERECHNUNG/MULTIPLE CHOICE/AUFGABEN), Schaltung (SCHALTUNG×2-Branches/
-  AUFGEBAUT MIT), SelbstBauen (SELBST BAUEN/MATERIAL/AUFBAU) — Margin-Variante B (`marginBottom:var(--space-3)`
-  als Style-Override); lokale `const eyebrow` entfernt.
-- **Stack ×0:** Spalten-Container sind animierte `motion.div` (rise) → bewusst NICHT geswappt
-  (Verhaltenswechsel/Animationsverlust vermieden); gaps stattdessen in-place tokenisiert.
-- Shell-/SelfExpl-Eyebrows: KEIN Eyebrow (nicht uppercase → Optik bliebe nicht erhalten).
+### A3 — `router.jsx`
+- `loadProgress()`-Direktaufruf raus; `useProgress()` für die `initialScreen`-Entscheidung
+  (`progress.lastVisited ? "dashboard" : "landing"`).
+- `useRouter` wird in `App` aufgerufen, das vom Provider umschlossen ist → Hook-Order ok.
 
-### Verifikation
-- ✅ `npm run lint` 0/0 · ✅ `npm run build` 0 Errors · ✅ keine Konsolenfehler.
-- ✅ Render (Dev, computed): Landing-Eyebrow 11px/uppercase/ls 2.2px(0.2em)/teal · h1 28px(display) ·
-  Landing-Panel-Override 32/24/24 · Lernseite-Header-Eyebrow 11px/uppercase · Readout 30px (roh) ·
-  Panel-Padding 16px(space-4) · Aufgaben-SectionTag 12px/uppercase/mb 12px · Shell-Eyebrow „LF 1 · …".
-- ✅ Alle 6 Screens (Landing + Lernseite/Aufgaben/SelfExpl/Schaltung/SelbstBauen) rendern ohne Bruch.
-- Dashboard/Lernfeld unangetastet (außerhalb Scope).
+### A4 — `FlowController.jsx`
+- `import { markScreenDone } from "../../data/progress.js"` raus.
+- `const { markDone } = useProgress();` ; `handleComplete` ruft
+  `markDone(lernfeldId, themenfeldId, currentIndex, steps.length)` statt `markScreenDone(...)`.
 
-### Berührte Files (11)
-`components/{Panel,Button,ProgressBar}.jsx` · `screens/LandingScreen.jsx` ·
-`screens/flow/{FlowController,CircuitBuilder,SchaltungScreen,AufgabenScreen,SelbstBauenScreen,LernseiteScreen,SelfExplanationScreen}.jsx`
+### A5 — `DashboardScreen.jsx` + `LernfeldScreen.jsx` (NUR Consumption in dieser Phase)
+- `const progress = loadProgress();` raus → `const { progress } = useProgress();`.
+- `loadProgress`-Import entfernen. Restliches Styling bleibt hier noch unangetastet (→ Phase B).
+
+### Verify A
+- `npm run lint` 0/0, `npm run build` 0 Errors.
+- Flow komplett durchklicken → „← Zurück"/Abschluss → Dashboard/Lernfeld zeigen aktualisierten
+  Fortschritt OHNE Page-Reload.
+- localStorage leeren → Reload → Landing (kein `lastVisited`). Nach erstem Schritt → `lastVisited` gesetzt.
+- → **Commit A:** „Progress reaktiv: ProgressContext, loadProgress aus Render-Bodies".
+
+---
+
+## REVIEW-GATE (Nico) zwischen A und B.
+
+---
+
+## PHASE B — Dashboard + Lernfeld token-nativ + Icon (nach Review von A)
+
+### Mapping-Recap (= Migration-B-Maps; in Step 0 gegen tokens.js verifizieren)
+- Font-Size: 25/26 → `--fs-display` · 18 → `--fs-h2` · 16 → `--fs-h3` · 15 → `--fs-body` ·
+  13 → `--fs-sm` · 12 → `--fs-label` · 11.5/10.5 → `--fs-micro`.
+- Spacing (margin/padding/gap): 8 → `--space-2` · 9–13 → `--space-3` · 14–16 → `--space-4` ·
+  22 → `--space-5` · 40 → `--space-7`.
+- Line-Height nach Rolle: Headings → `--lh-tight`, Body/UI → `--lh-base`.
+- Letter-Spacing: eng -0.01em → `--ls-tight`; Eyebrow 0.2em via `Eyebrow`/`--ls-eyebrow`.
+- ROH lassen: Geometrie (maxWidth 560, Bar-Höhe 3, Icon-Box 18), Radien, Opacities,
+  Zwischenwerte außerhalb der Bänder.
+
+### B1 — `DashboardScreen.jsx`
+- Font-Size/Spacing/Line-Height-Hardcodes → Tokens.
+- `Eyebrow`-Adoption NUR bei eindeutigem Muster-Match (uppercase + 0.2em-Tracking bleibt optisch erhalten):
+  - Weitermachen-Label (uppercase, letterSpacing .18em, teal) → `<Eyebrow>`. ✔ Match.
+  - „LERNPROGRAMM" (letterSpacing .04em, dim) → NUR fontSize/color tokenisieren, KEIN Eyebrow
+    (0.2em-Tracking würde die Optik ändern). „v0.1"-Tag ebenso als mono-Span tokenisieren.
+- „Abgeschlossen ✓": Glyph „✓" raus → `<IconCheck size={…}/>` inline, Farbe teal (wie bisher
+  der grüne Text). Text „Abgeschlossen" bleibt. (IconCheck = konsistent zu LernfeldScreens StatusIcon.)
+- Animiertes Spalten-`motion.div` (rise) bleibt — `gap`/Paddings in-place tokenisieren.
+
+### B2 — `LernfeldScreen.jsx`
+- „IHK-Lernfeld · Nr. {ihkNummer}" (uppercase, letterSpacing .2em, teal) → `<Eyebrow>`. ✔ Match.
+- h1 26 → `--fs-display`; `letterSpacing` → `--ls-tight`.
+- Card-/Header-Spacings + Font-Sizes (h2 16 → `--fs-h3` etc.) → Tokens.
+- StatusIcon nutzt bereits `Icons.jsx` — unverändert.
+
+### Verify B
+- lint/build grün. Beide Screens rendern ohne Bruch (LandingScreen als Stil-Referenz).
+- Dashboard-„✓" ist jetzt SVG-Icon. Keine rohen Font/Spacing-Werte mehr im Scope
+  (außer bewusst roh: Geometrie/Radien/Opacities). ≤2px-Snaps ok.
+- → **Commit B:** „Dashboard + Lernfeld token-nativ; Emoji-Glyph raus".
+
+---
+
+## Ausführungs-Protokoll (CC)
+0. Step-0-Inventar zeigen (vor Änderungen):
+   - Betroffene Dateien (echte Pfade) je Phase.
+   - Exakte Token-Identifier + Line-Height-Werte aus `tokens.js`/`cssVars`.
+   - Props von `Eyebrow` + Signatur von `IconCheck` aus dem Code.
+   - Pro Datei: alle Font/Spacing/LineHeight-Hardcodes + Adoption-Kandidaten mit
+     vorgeschlagenem Token/Primitive. Für Phase A zusätzlich: Vollinhalt `ProgressContext.jsx`.
+1. Auf GO warten.
+2. Phase A: Datei für Datei dryRun → GO → schreiben. Verify A. Commit A.
+3. Review-Gate (Nico) zwischen A und B.
+4. Phase B: dito. Verify B. Commit B.
+5. Commits bleiben lokal. Push nur auf ausdrückliche Ansage.
+
+## Akzeptanzkriterien (gesamt)
+- Kein `loadProgress()` mehr in Render-Bodies; Fortschritt reaktiv über Context.
+- Dashboard/Lernfeld token-nativ; Eyebrow/Icon adoptiert wo Muster passt; kein Emoji-Glyph.
+- Kein Verhaltens-/Layout-/Farb-Redesign über das Ziel hinaus. Kein neues Paket.
+- Flow-Screens/Content/Doku unangetastet. Zwei saubere Commits (A, B).
+
+## Nicht in diesem Schritt
+- Visuelles Redesign Dashboard/Lernfeld. Weitere Lernfeld-Inhalte (LF2).
+- Realer Classifier-Test in echtem Chrome/Edge.
+
+---
+
+## STATUS: PHASE A COMPLETE (Commit A) — wartet auf Review-Gate
+
+Erledigt am 2026-06-17.
+- **NEU** `data/ProgressContext.jsx`: `ProgressProvider` (State via `useState(()=>loadProgress())`),
+  `markDone`/`reset` (persistieren über progress.js + `setProgress(loadProgress())`), `useProgress()`-Hook.
+- `main.jsx`: `<ProgressProvider>` um `<App/>` (in MotionConfig, in StrictMode).
+- `router.jsx`: `loadProgress()` raus → `useProgress()` für `initialScreen`.
+- `FlowController.jsx`: `markScreenDone`-Import raus → `useProgress().markDone` in `handleComplete`.
+- `DashboardScreen.jsx` + `LernfeldScreen.jsx`: `loadProgress()` raus → `useProgress()` (nur Consumption; Styling unverändert).
+- Lint **0/0** (react-refresh-Warning der Context-Datei gezielt deaktiviert), Build 0 Errors, keine Konsolenfehler.
+- **Reaktivität verifiziert (ohne Reload):** Flow durchgeklickt → Lernfeld zeigt tf-01-uri sofort „Wiederholen"
+  (`completed`), tf-02 reaktiv freigeschaltet, Dashboard „1 von 6 abgeschlossen". Leeres localStorage → Landing.
+- `data/progress.js` unverändert (Persistenz-Layer). Flow-Screens/Content/Doku unangetastet.
+
+**→ REVIEW-GATE:** Warte auf Nicos Abnahme von Phase A, bevor Phase B (Dashboard/Lernfeld token-nativ) startet.

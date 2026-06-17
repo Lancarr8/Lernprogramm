@@ -4,7 +4,7 @@ import Button from "../components/Button.jsx";
 import ProgressBar from "../components/ProgressBar.jsx";
 import { rise } from "../theme/motion.js";
 import * as allContent from "../content/index.js";
-import { loadProgress } from "../data/progress.js";
+import { useProgress } from "../data/ProgressContext.jsx";
 
 // DashboardScreen — Übersicht aller Lernfelder + Fortschritt + Wiedereinstieg.
 
@@ -26,7 +26,7 @@ function resolveLastVisited(lastVisited, lernfelder) {
 }
 
 export default function DashboardScreen({ navigate }) {
-  const progress = loadProgress();
+  const { progress } = useProgress();
   const lernfelder = Object.values(allContent);
   const last = resolveLastVisited(progress.lastVisited, lernfelder);
 
