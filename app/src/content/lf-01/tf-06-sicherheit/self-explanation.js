@@ -1,65 +1,64 @@
 // self-explanation.js — tf-06-sicherheit
+// Autorisierte Konzept-Karte. test() = Regex-Heuristik (CC-Erstfassung aus den
+// canonical-Texten abgeleitet — von Nico zu prüfen/verfeinern).
 
 export default {
   prompt:
-    "Warum ist elektrischer Strom gef\u00e4hrlich \u2014 und was bestimmt " +
-    "wie gef\u00e4hrlich ein Stromschlag ist?",
-  hint:
-    "Denk an das Ohmsche Gesetz: I = U / R. " +
-    "Der K\u00f6rper ist ein Widerstand.",
+    "Warum ist elektrischer Strom gefährlich — und was bestimmt wie gefährlich ein Stromschlag ist?",
+  hint: "Denk an das Ohmsche Gesetz: I = U / R. Der Körper ist ein Widerstand.",
   keyPoints: [
     {
       id: "kp1",
-      label: "Stromst\u00e4rke ist entscheidend, nicht Spannung",
+      label: "Stromstärke ist entscheidend, nicht Spannung",
       canonical:
-        "Nicht die Spannung t\u00f6tet, sondern die Stromst\u00e4rke die durch den K\u00f6rper flie\u00dft. " +
-        "Schon 50 mA durch das Herz k\u00f6nnen t\u00f6dlich sein.",
-      nudge:
-        "Was ist in Wirklichkeit gef\u00e4hrlich bei einem Stromschlag \u2014 Volt oder Ampere?",
+        "Nicht die Spannung tötet, sondern die Stromstärke die durch den Körper fließt. Schon 50 mA durch das Herz können tödlich sein.",
+      nudge: "Was ist in Wirklichkeit gefährlich bei einem Stromschlag — Volt oder Ampere?",
+      test: (t) =>
+        /(stromstärke|strom|ampere|milliampere|\bma\b)/.test(t) &&
+        /(tödlich|gefähr\w*|entscheid\w*|herz|nicht die spannung|nicht spannung|nicht die volt)/.test(t),
     },
     {
       id: "kp2",
-      label: "K\u00f6rperwiderstand bestimmt den Strom",
+      label: "Körperwiderstand bestimmt den Strom",
       canonical:
-        "Der K\u00f6rperwiderstand bestimmt nach I = U/R wie viel Strom bei gegebener Spannung flie\u00dft. " +
-        "Feuchte Haut senkt den Widerstand und erh\u00f6ht die Gefahr.",
-      nudge:
-        "Wie berechnet sich der K\u00f6rperstrom \u2014 und welche Rolle spielt die Feuchtigkeit?",
+        "Der Körperwiderstand bestimmt nach I = U/R wie viel Strom bei gegebener Spannung fließt. Feuchte Haut senkt den Widerstand und erhöht die Gefahr.",
+      nudge: "Wie berechnet sich der Körperstrom — und welche Rolle spielt die Feuchtigkeit?",
+      test: (t) =>
+        /(körper\w*|haut)/.test(t) &&
+        /(widerstand|feucht\w*|nass\w*|trocken\w*|i ?= ?u|u ?\/ ?r|ohm|schweiß)/.test(t),
     },
     {
       id: "kp3",
-      label: "Schutzma\u00dfnahmen verhindern Fehlerstrom",
+      label: "Schutzmaßnahmen verhindern Fehlerstrom",
       canonical:
-        "Schutzma\u00dfnahmen wie Isolierung, Schutzerde und FI-Schalter verhindern " +
-        "dass Strom durch den K\u00f6rper flie\u00dft oder schalten schnell genug ab.",
-      nudge:
-        "Wie sch\u00fctzen technische Ma\u00dfnahmen vor gef\u00e4hrlichem Strom?",
+        "Schutzmaßnahmen wie Isolierung, Schutzerde und FI-Schalter verhindern dass Strom durch den Körper fließt oder schalten schnell genug ab.",
+      nudge: "Wie schützen technische Maßnahmen vor gefährlichem Strom?",
+      test: (t) =>
+        /(schutzmaßnahm\w*|isolier\w*|fi[- ]?schalter|fi schalter|schutzerd\w*|schutzleiter|erdung|geerdet|sicherung|abschalt\w*)/.test(t),
     },
   ],
   misconceptions: [
     {
       id: "mc1",
       label: "Niedrige Spannung ist immer sicher",
-      beschreibung:
-        "Spannungen unter 50 V sind immer sicher und k\u00f6nnen nicht gef\u00e4hrlich werden.",
       fix:
-        "Auch Niederspannung kann gef\u00e4hrlich sein: " +
-        "bei sehr niedrigem K\u00f6rperwiderstand (z.B. in der Badewanne) " +
-        "flie\u00dfen selbst bei 12 V gef\u00e4hrliche Str\u00f6me. " +
-        "Kontext entscheidet \u2014 nicht nur die Spannung.",
+        "Auch Niederspannung kann gefährlich sein: bei sehr niedrigem Körperwiderstand (z.B. in der Badewanne) fließen selbst bei 12 V gefährliche Ströme. Kontext entscheidet — nicht nur die Spannung.",
+      test: (t) =>
+        (/(niedrig\w*|gering\w*|klein\w*|niederspannung|kleinspannung|unter \d+)/.test(t) &&
+          /(spannung|volt|\bv\b)/.test(t) &&
+          /(sicher|harmlos|keine gefahr|nicht gefähr\w*|ungefähr\w*|passiert nichts)/.test(t)),
     },
     {
       id: "mc2",
-      label: "Strom flie\u00dft nur bei direktem Kontakt",
-      beschreibung:
-        "Gef\u00e4hrlicher Strom flie\u00dft nur wenn man beide Leiter gleichzeitig ber\u00fchrt.",
+      label: "Strom fließt nur bei direktem Kontakt mit beiden Leitern",
       fix:
-        "Schon ein Kontakt mit einem spannungsf\u00fchrenden Teil gen\u00fcgt \u2014 " +
-        "wenn der K\u00f6rper \u00fcber Schutzerde oder Fu\u00dfboden geerdet ist. " +
-        "Deshalb Schutzschuhe und Isoliermatten bei Elektroarbeiten.",
+        "Schon ein Kontakt mit einem spannungsführenden Teil genügt — wenn der Körper über Schutzerde oder Fußboden geerdet ist. Deshalb Schutzschuhe und Isoliermatten bei Elektroarbeiten.",
+      test: (t) =>
+        /(beide\w*[^.]{0,15}(leiter|pole|kabel|drähte|adern|phasen))/.test(t) ||
+        /(nur|erst)[^.]{0,20}(beide|gleichzeitig)[^.]{0,20}berühr\w*/.test(t) ||
+        /gleichzeitig[^.]{0,20}berühr\w*/.test(t),
     },
   ],
   praiseDeepening:
-    "Gut erkl\u00e4rt. Weiterf\u00fchrend: Warum ist Wechselstrom bei gleicher Spannung " +
-    "gef\u00e4hrlicher als Gleichstrom f\u00fcr den menschlichen K\u00f6rper?",
+    "Gut erklärt. Weiterführend: Warum ist Wechselstrom bei gleicher Spannung gefährlicher als Gleichstrom für den menschlichen Körper?",
 };

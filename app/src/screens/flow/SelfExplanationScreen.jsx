@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import Panel from "../../components/Panel.jsx";
 import Button from "../../components/Button.jsx";
 import { rise, pop } from "../../theme/motion.js";
-import { loadClassifier, classifyExplanation } from "../../data/classifier.js";
+import { classifyExplanation } from "../../data/classifier.js";
 import {
   IconCheck,
   IconCircle,
@@ -23,10 +23,10 @@ import {
   Konzept-Karte (CONCEPT_URI) und liefert {covered, misconceptions, confidence}.
   Jeder Coach-Text stammt aus autorisierten Snippets der Karte.
 
-  AUSTAUSCH-PUNKT (vollzogen): classifyExplanation() ist jetzt eine semantische
-  Embedding-Klassifikation (data/classifier.js, lokales Modell im Browser) statt
-  Regex. Der Vertrag ist identisch — sie KLASSIFIZIERT nur gegen die autorisierte
-  Konzeptkarte und generiert keinen Fachinhalt. (Siehe HANDOFF.md.)
+  AUSTAUSCH-PUNKT: classifyExplanation() ist eine autorisierte Regex-Heuristik
+  (data/classifier.js) — synchron, kein Modell, offline. Der Embedding-Ansatz wurde
+  verworfen (multilinguale Modelle initialisieren im Browser nicht; englisches Modell
+  war polaritäts-blind). Vertrag identisch: KLASSIFIZIERT nur gegen die Konzeptkarte.
 
   CONTENT: Die Konzept-Karte kommt als data-Prop aus self-explanation.js
   (vom FlowController geladen) — kein hardcodierter Themen-Inhalt mehr im Screen.
@@ -137,32 +137,9 @@ export default function SelfExplanationScreen({ data, onComplete, currentStep, t
   const [feedback, setFeedback] = useState(null);
   const [empty, setEmpty] = useState(false);
   const [attempts, setAttempts] = useState(0);
-  const [classifierReady, setClassifierReady] = useState(false);
-  const [classifierLoading, setClassifierLoading] = useState(true);
-  const [loadProgress, setLoadProgress] = useState(0);
-  const [checking, setChecking] = useState(false);
   const taRef = useRef(null);
 
-  // Embedding-Modell beim Mount laden (nur wenn eine Konzept-Karte vorliegt).
-  useEffect(() => {
-    if (!data || !data.keyPoints) return;
-    let active = true;
-    loadClassifier((progress) => {
-      if (active && progress.status === "progress") {
-        setLoadProgress(Math.round(progress.progress ?? 0));
-      }
-    }).then(() => {
-      if (!active) return;
-      setClassifierReady(true);
-      setClassifierLoading(false);
-    });
-    return () => {
-      active = false;
-    };
-  }, [data]);
-
-  async function check(value) {
-    if (!classifierReady) return;
+  function check(value) {
     const v = value != null ? value : text;
     if (!v.trim()) {
       setFeedback(null);
@@ -170,13 +147,8 @@ export default function SelfExplanationScreen({ data, onComplete, currentStep, t
       return;
     }
     setEmpty(false);
-    setChecking(true);
-    try {
-      const result = await classifyExplanation(v, concept);
-      setFeedback(buildFeedback(result, concept));
-    } finally {
-      setChecking(false);
-    }
+    const result = classifyExplanation(v, concept);
+    setFeedback(buildFeedback(result, concept));
     setAttempts((n) => n + 1);
   }
 
@@ -290,58 +262,21 @@ export default function SelfExplanationScreen({ data, onComplete, currentStep, t
               alignItems: "center",
             }}
           >
-            <Button
-              variant="go"
-              onClick={() => check()}
-              disabled={!classifierReady || checking}
-              style={{ opacity: !classifierReady || checking ? 0.6 : 1 }}
-            >
-              {checking ? (
-                "Prüfe…"
-              ) : classifierLoading ? (
-                `Lädt KI… ${loadProgress}%`
-              ) : (
-                <>
-                  <IconCheck size={15} />
-                  Prüfen
-                </>
-              )}
+            <Button variant="go" onClick={() => check()}>
+              <IconCheck size={15} />
+              Prüfen
             </Button>
             {import.meta.env.DEV && (
               <>
-                <Button
-                  variant="ghost"
-                  onClick={() => loadDemo("strong")}
-                  disabled={!classifierReady || checking}
-                  style={{ opacity: !classifierReady || checking ? 0.6 : 1 }}
-                >
+                <Button variant="ghost" onClick={() => loadDemo("strong")}>
                   Demo: starke Erklärung
                 </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => loadDemo("weak")}
-                  disabled={!classifierReady || checking}
-                  style={{ opacity: !classifierReady || checking ? 0.6 : 1 }}
-                >
+                <Button variant="ghost" onClick={() => loadDemo("weak")}>
                   Demo: mit Fehlvorstellung
                 </Button>
               </>
             )}
           </div>
-
-          {/* Warmup-Hinweis: nur beim ersten Prüfen (erste Inferenz baut WebGL-Shader auf) */}
-          {checking && attempts === 0 && (
-            <p
-              style={{
-                margin: "var(--space-3) 0 0",
-                fontFamily: "var(--font-mono)",
-                fontSize: "var(--fs-micro)",
-                color: "var(--c-dim)",
-              }}
-            >
-              Ersten Start vorbereiten — dauert ~15 Sekunden…
-            </p>
-          )}
         </Panel>
 
         {/* Leer-Hinweis */}
@@ -497,7 +432,7 @@ export default function SelfExplanationScreen({ data, onComplete, currentStep, t
             <IconShield size={14} />
           </span>
           Coach klassifiziert nur, welche Kernpunkte getroffen sind. Alle Erklärtexte sind
-          autorisiert — die Klassifikation läuft lokal per Embedding-Modell im Browser.
+          autorisiert — die Klassifikation läuft lokal per Heuristik, offline, ohne KI-Generierung.
         </p>
       </motion.div>
     </div>
