@@ -1,7 +1,7 @@
 # Roadmap.md — Lernprogramm
 > Single Source of Truth: Vision, Konzepte, App-Struktur, Datenmodell, Roadmap.
 > Autorität: Nico / Chat-Claude. CC darf diese Datei nicht autonom editieren.
-> Zuletzt aktualisiert: 2026-06-16
+> Zuletzt aktualisiert: 2026-06-17
 
 ---
 
@@ -172,11 +172,11 @@ Reihenfolge: LF2 → LF3 → LF4 (1. Lehrjahr zuerst).
 ### 🌐 Offen — Phase 6: Landing Page
 Eigene Website, PWA-Install-Button, kurze App-Beschreibung.
 
-### 🔧 P0 — Bug-Fixes & Politur  (Stand 2026-06-16)
+### 🔧 P0 — Bug-Fixes & Politur  (Stand 2026-06-17)
 - ✅ Eyebrow „LERNFELD · URI" → dynamisch aus Content (FlowController reicht `kontext={lfNummer,thema}` an alle Flow-Screens; Eyebrow-Primitive adoptiert)
-- 🟡 Emoji → Inline-SVG: erledigt in LernfeldScreen + Flow + konsolidiert in `Icons.jsx`. Offen: Glyph „✓" in DashboardScreen — kommt mit Dashboard-Rebuild.
-- ⬜ Lernplan.md = Duplikat von REQUIREMENTS.md → entfernen (Doku, offen)
-- ⬜ loadProgress() im Render → reaktiv in Context heben (mit Dashboard-Rebuild)
+- ✅ Emoji → Inline-SVG: LernfeldScreen + Flow + DashboardScreen (Glyph „✓" → `<IconCheck>`), konsolidiert in `Icons.jsx`.
+- ✅ Lernplan.md entfernt (Duplikat von REQUIREMENTS.md) — Commit 8fe4761
+- ✅ loadProgress() → reaktiv über ProgressContext (Dashboard-Rebuild Phase A)
 
 ### ✅ Design-System — Migration A & B (2026-06-16)
 - **Migration A:** Erfolg-Rolle als eigene Farbe — Tokens `--c-ok`/`--c-ok-soft`/`--c-ok-edge` (Mint #5FE3A1), Erfolg-States teal → Mint.
